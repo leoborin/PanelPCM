@@ -138,10 +138,11 @@ def email():
         'Rec_Sistema': 'first',
         'Sequencia': 'first',
         'DT_NOTA': 'first',
-        'Defeitos': lambda x: ' + '.join(x.astype(str)),  # Concatenar os valores de 'Defeitos'
+        # Concatenar os valores de 'Defeitos'
+        'Defeitos': lambda x: ' + '.join(x.astype(str)),
         'data_now': 'first'  # Manter o primeiro valor
     })
-        # Depurar o número de resultados
+    # Depurar o número de resultados
     print(len(result))
 
     # Renderizar o template HTML com o DataFrame filtrado
@@ -233,28 +234,19 @@ def card():
 
 @app.route('/lista')  # pagina inicial
 def lista():
-    print("inicio")
-    global user_info
-    global df_stage_merge
-    # Carregar o arquivo JSON em um DataFrame
-    # df_QUERY_z369 = pd.read_json(
-    #     '\\\\fs-vwps02.all-logistica.net\\GRUPOS2\\CIM\\Coordenação de monitoramento de Material Rodante\\Data_STAGE\\df_stage_Nota.json', lines=True)
-    # df_QUERY_TELA_164_FOTO = pd.read_json(
-    #     '\\\\fs-vwps02.all-logistica.net\\GRUPOS2\\CIM\\Coordenação de monitoramento de Material Rodante\\Data_STAGE\\df_QUERY_TELA_164_FOTO.json', lines=True)
     print("leituradf_QUERY_z369")
     df_QUERY_z369 = pd.read_json(
-       'files\df_stage_Nota.json', lines=True)
+        'files\df_stage_Nota.json', lines=True)
     print("leituradf_notasExport")
     df_QUERY_notasExport = pd.read_excel(
         'uploads//nota_export.xlsx')
     print("leituradf_QUERY_TELA_164_FOTO")
     df_QUERY_TELA_164_FOTO = pd.read_json(
-       'files\df_QUERY_TELA_164_FOTO.json', lines=True)
-    
-    
-    df_QUERY_TELA_164_FOTO_teste = df_QUERY_TELA_164_FOTO[(df_QUERY_TELA_164_FOTO['TREM'] == 'C65')]
-    print("C65")
-    print(len(df_QUERY_TELA_164_FOTO_teste))
+        'files\df_QUERY_TELA_164_FOTO.json', lines=True)
+
+    # df_QUERY_TELA_164_FOTO_teste = df_QUERY_TELA_164_FOTO[(df_QUERY_TELA_164_FOTO['TREM'] == 'C65')]
+    # print("C65")
+    # print(len(df_QUERY_TELA_164_FOTO_teste))
 
     if len(df_QUERY_notasExport) > 1:
         print("nota_export OK ")
@@ -326,19 +318,19 @@ def lista():
 
     df_QUERY_TELA_164_FOTO["ATIVO_TL"] = df_QUERY_TELA_164_FOTO["VAGAO"].astype(
         str) + df_QUERY_TELA_164_FOTO["SERIE"].astype(str)
-    
+    df_QUERY_TELA_164_FOTO['ATIVO_TL'] = df_QUERY_TELA_164_FOTO['VAGAO'].astype(
+        str).str.zfill(7) + df_QUERY_TELA_164_FOTO['SERIE']
     df_stage_merge = pd.merge(df_QUERY_TELA_164_FOTO,
-                              df_QUERY_z369, on='ATIVO_TL', how='left')
-    
-    df_stage_merge_teste = df_stage_merge[(df_stage_merge['TREM'] == 'C65')]
-    print("C65 - 2")
-    print(len(df_stage_merge_teste))
+                              df_QUERY_z369, on='ATIVO_TL', how='left')  # ERRO aqui !!
+
+    # df_stage_merge_teste = df_stage_merge[(df_stage_merge['TREM'] == 'C65')]
+    # print("C65 - 2")
+    # print(len(df_stage_merge_teste))
 
     df_stage_merge['NR_OS'] = df_stage_merge['NR_OS'].apply(
         lambda x: str(int(x)) if pd.notnull(x) else '')
-    df_stage_merge = df_stage_merge[(df_stage_merge['Aux_Status'] != "Em processamento")]
-
-
+    df_stage_merge = df_stage_merge[(
+        df_stage_merge['Aux_Status'] != "Em processamento")]
 
     # Reiniciar opções de exibição do pandas
     pd.reset_option('display.max_rows')
@@ -356,15 +348,16 @@ def lista():
     # Garantir que todos os NR_OS possíveis estejam no dataframe
     # Adicionar NR_OS ausentes, preenchendo com zeros
     nr_os_unicos = df_stage_merge['NR_OS'].unique()
-    Pontuacao_trem = Pontuacao_trem.set_index('NR_OS').reindex(nr_os_unicos, fill_value=0).reset_index()
+    Pontuacao_trem = Pontuacao_trem.set_index('NR_OS').reindex(
+        nr_os_unicos, fill_value=0).reset_index()
 
     # Exibir para testes
     print(Pontuacao_trem)
 
     # Teste específico com NR_OS 1989764
-    Pontuacao_trem_teste = Pontuacao_trem[(Pontuacao_trem['NR_OS'] == 1989764)]
-    print("C65 - 3")
-    print(len(Pontuacao_trem_teste))
+    # Pontuacao_trem_teste = Pontuacao_trem[(Pontuacao_trem['NR_OS'] == 1989764)]
+    # print("C65 - 3")
+    # print(len(Pontuacao_trem_teste))
 
     # Mesclar com as informações de TREM e NR_OS
     Pontuacao_trem = Pontuacao_trem.merge(
@@ -388,7 +381,7 @@ def lista():
     df_QUERY_TELA_164_FOTO["ATIVO_TL"] = df_QUERY_TELA_164_FOTO["VAGAO"].astype(
         str) + df_QUERY_TELA_164_FOTO["SERIE"].astype(str)
     df_stage_merge = pd.merge(df_QUERY_TELA_164_FOTO,
-                            df_QUERY_z369, on='ATIVO_TL', how='left')
+                              df_QUERY_z369, on='ATIVO_TL', how='left')
     df_stage_merge['NR_OS'] = df_stage_merge['NR_OS'].apply(
         lambda x: str(int(x)) if pd.notnull(x) else ''
     )
@@ -398,8 +391,6 @@ def lista():
 
     # Apenas para teste, exportar CSV
     # df_stage_merge.to_csv('files//df_stage_merge.csv', index=False)
-
-    # Renderizar o template com os dados
     return render_template('lista.html', df=df, user_info=user_info)
 
 
