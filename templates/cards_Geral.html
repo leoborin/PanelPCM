@@ -188,7 +188,8 @@
         <div class="card">
             <div class="card-header">
                 <span><input type="checkbox" id="select-all">OS: {{ nr_os }} | TREM: {{ trem }}  </span>
-                <span class="date-now">{{ os_rows.iloc[0]['data_now'] }}</span>  <!-- Data atual -->
+                <span class="date-now">{{ os_rows.iloc[0]['data_now'] }}</span>  <!-- Data atual -->                  
+                <button class="btn-primary" onclick="deleteItem('{{ nr_os }}')">Excluir</button><!-- Botão de exclusão -->
             </div>
             <div class="card-content">
                 {% for ativo_tl, rows in os_rows.groupby('ATIVO_TL') %}
@@ -250,6 +251,21 @@
     </div>
 
     <script>
+
+    function deleteItem(id) {
+            fetch(`/delete_item/${id}`, { method: 'POST' })
+                .then(response => {
+                    if (response.ok) {
+                        // Atualiza a página para refletir a exclusão
+                        location.reload();
+                    } else {
+                        alert("Erro ao excluir item.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Erro:", error);
+                });
+        }
         
 
         function filterCards() {

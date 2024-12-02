@@ -29,6 +29,16 @@ if not os.path.exists(UPLOAD_FOLDER):
 global df_stage_merge
 
 
+@app.route('/delete_item/<int:id>', methods=['POST'])
+def delete_item(id):
+    geralCards = pd.read_csv('files//submitted_data.csv')
+    # Filtra o DataFrame removendo o item pelo ID
+    geralCards = geralCards[geralCards['nr_os'] != id]
+    geralCards.to_csv('files//submitted_data.csv', index=False)
+
+    return redirect(url_for('cardsGeral'))
+
+
 @app.route('/salvar-df', methods=['POST'])
 def salvar_df():
     try:
@@ -179,13 +189,13 @@ def cardsGeral():
 def upload_file():
     global user_info
     if 'file' not in request.files:
-        user_info = "Sem dados Locais - APENAS STAGE"
+        # user_info = "Sem dados Locais - APENAS STAGE"
         return redirect(url_for('lista'))
 
     file = request.files['file']
 
     if file.filename == '':
-        user_info = "Sem dados Locais - APENAS STAGE"
+        # user_info = "Sem dados Locais - APENAS STAGE"
         return redirect(url_for('lista'))
 
     # Extrair a extensão do arquivo
@@ -203,7 +213,7 @@ def upload_file():
     data_atual = datetime.now()
     data_atual = data_atual.strftime("%d/%m/%Y %H:%M:%S")
     print("Data e hora atual:", data_atual)
-    user_info = "Dados Locais " + data_atual
+    # user_info = "Dados Locais " + data_atual
 
     return redirect(url_for('lista'))
 
@@ -234,179 +244,148 @@ def card():
 
 @app.route('/lista')  # pagina inicial
 def lista():
-    print("leituradf_QUERY_z369")
-    df_QUERY_z369 = pd.read_json(
-        'files\df_stage_Nota.json', lines=True)
-    print("leituradf_notasExport")
-    df_QUERY_notasExport = pd.read_excel(
-        'uploads//nota_export.xlsx')
-    print("leituradf_QUERY_TELA_164_FOTO")
-    df_QUERY_TELA_164_FOTO = pd.read_json(
-        'files\df_QUERY_TELA_164_FOTO.json', lines=True)
+    try:
+        print("leitura df_QUERY_z369")
+        df_QUERY_z369 = pd.read_json(r'files\df_stage_Nota.json', lines=True)
 
-    # df_QUERY_TELA_164_FOTO_teste = df_QUERY_TELA_164_FOTO[(df_QUERY_TELA_164_FOTO['TREM'] == 'C65')]
-    # print("C65")
-    # print(len(df_QUERY_TELA_164_FOTO_teste))
+        print("leitura df_QUERY_notasExport")
+        df_QUERY_notasExport = pd.read_excel(r'uploads//nota_export.xlsx')
 
-    if len(df_QUERY_notasExport) > 1:
-        print("nota_export OK ")
-        # Obter os nomes atuais das colunas
-        colunas_atuais = df_QUERY_notasExport.columns
-        df_QUERY_notasExport_filtred = df_QUERY_notasExport[(df_QUERY_notasExport['Status do sistema'] == 'MSPN') | (
-            df_QUERY_notasExport['Status do sistema'] == 'MSPR')]
+        print("leitura df_QUERY_TELA_164_FOTO")
+        df_QUERY_TELA_164_FOTO = pd.read_json(
+            r'files\df_QUERY_TELA_164_FOTO.json', lines=True)
 
-        # Mapeamento entre nomes antigos e novos
-        mapa_colunas = {
-            'Data da nota': 'DT_NOTA',
-            'Hora da nota': 'Hora da nota',
-            'Equipam.': 'ATIVO_TL',
-            'Parada': 'Flag',
-            'Notificador': 'Notificador',
-            'TpNota': 'TP_NOTA',
-            'CódFalha': 'CodFalha',
-            'Descrição': 'TEXTO',
-            'Texto do item': 'Texto_Item',
-            'Texto da causa': 'Texto_Causa',
-            'Status do sistema': 'Aux_Status',
-            'Nota': 'NOTA',
-            'Novo Descrição': 'TEXTO',
-            'Novo Texto do item': 'Texto_Item',
-            'Novo Texto da causa': 'Texto_Causa',
-            'Modelo': 'ATIVO_TL'
-        }
+        if not df_QUERY_notasExport.empty:
+            print("nota_export OK")
+            colunas_atuais = df_QUERY_notasExport.columns
+            df_QUERY_notasExport_filtred = df_QUERY_notasExport[(df_QUERY_notasExport['Status do sistema'] == 'MSPN') |
+                                                                (df_QUERY_notasExport['Status do sistema'] == 'MSPR')]
 
-        # Criar uma lista de novos nomes, mantendo os originais onde não há correspondência
-        colunas_convertidas = [mapa_colunas.get(
-            col, col) for col in colunas_atuais]
+            mapa_colunas = {
+                'Data da nota': 'DT_NOTA',
+                'Hora da nota': 'Hora da nota',
+                'Equipam.': 'ATIVO_TL',
+                'Parada': 'Flag',
+                'Notificador': 'Notificador',
+                'TpNota': 'TP_NOTA',
+                'CódFalha': 'CodFalha',
+                'Descrição': 'TEXTO',
+                'Texto do item': 'Texto_Item',
+                'Texto da causa': 'Texto_Causa',
+                'Status do sistema': 'Aux_Status',
+                'Nota': 'NOTA',
+                'Novo Descrição': 'TEXTO',
+                'Novo Texto do item': 'Texto_Item',
+                'Novo Texto da causa': 'Texto_Causa',
+                'Modelo': 'ATIVO_TL'
+            }
 
-        # Garantir que o número de nomes no mapeamento corresponda ao número de colunas
-        if len(colunas_convertidas) == len(colunas_atuais):
-            # Renomear as colunas no DataFrame `df_QUERY_notasExport`
-            df_QUERY_notasExport_filtred.columns = colunas_convertidas
+            colunas_convertidas = [mapa_colunas.get(
+                col, col) for col in colunas_atuais]
+
+            if len(colunas_convertidas) == len(colunas_atuais):
+                df_QUERY_notasExport_filtred.columns = colunas_convertidas
+            else:
+                print(
+                    "Erro: O número de colunas mapeadas não corresponde ao número de colunas no DataFrame.")
+
+            df_QUERY_notasExport_filtred['BASE'] = "SAP_Arquivo_LOCAL"
+            df_QUERY_z369['BASE'] = "SAP_STAGE"
+
+            df_concatenado = pd.concat(
+                [df_QUERY_z369, df_QUERY_notasExport_filtred])
+            df_resultado_Export_z369_final = df_concatenado.drop_duplicates(
+                subset=['NOTA'], keep='last')
         else:
-            print(
-                "Erro: O número de colunas mapeadas não corresponde ao número de colunas no DataFrame.")
+            user_info = "Sem dados Locais - APENAS STAGE"
+            print("nota_export NOK")
 
-        df_QUERY_notasExport_filtred['BASE'] = "SAP_Arquivo_LOCAL"
-        df_QUERY_z369['BASE'] = "SAP_STAGE"
+        if len(df_QUERY_TELA_164_FOTO) > 1000:
+            print("df_QUERY_TELA_164_FOTO OK")
+        else:
+            print("df_QUERY_TELA_164_FOTO NOK")
 
-        df_concatenado = pd.concat(
-            [df_QUERY_z369, df_QUERY_notasExport_filtred])
+        if len(df_QUERY_z369) > 1000:
+            print("df_QUERY_z369 OK")
+        else:
+            print("df_QUERY_z369 NOK")
 
-        df_resultado_Export_z369_final = df_concatenado.drop_duplicates(
-            subset=['NOTA'], keep='last')
+        df_QUERY_z369 = df_resultado_Export_z369_final
 
-    else:
-        user_info = "Sem dados Locais - APENAS STAGE"
-        print("nota_export NOK")
+        df_QUERY_TELA_164_FOTO['ATIVO_TL'] = df_QUERY_TELA_164_FOTO['VAGAO'].astype(
+            str).str.zfill(7) + df_QUERY_TELA_164_FOTO['SERIE']
+        df_QUERY_z369['ATIVO_TL'] = df_QUERY_z369['ATIVO_TL'].astype(
+            str)  # Garantir consistência de tipo
+        df_stage_merge = pd.merge(
+            df_QUERY_TELA_164_FOTO, df_QUERY_z369, on='ATIVO_TL', how='left')
 
-    if len(df_QUERY_TELA_164_FOTO) > 1000:
-        print("df_QUERY_TELA_164_FOTO OK ")
-    else:
-        print("df_QUERY_TELA_164_FOTO NOK ")
+        df_stage_merge['NR_OS'] = df_stage_merge['NR_OS'].apply(
+            lambda x: str(int(x)) if pd.notnull(x) else '')
+        df_stage_merge = df_stage_merge[(
+            df_stage_merge['Aux_Status'] != "Em processamento")]
+        df_stage_merge = df_stage_merge.drop_duplicates(
+            subset='NOTA', keep='first')
 
-    if len(df_QUERY_z369) > 1000:
-        print("df_QUERY_z369 OK ")
-    else:
-        print("df_QUERY_z369 NOK ")
+        pd.set_option('display.max_rows', None)
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.width', None)
+        pd.set_option('display.max_colwidth', None)
 
-    # ponto chave para textes
-    df_QUERY_z369 = df_resultado_Export_z369_final
-    df_QUERY_z369_bkp = df_resultado_Export_z369_final
+        Pontuacao_trem = pd.pivot_table(
+            df_stage_merge, index='NR_OS', columns='TP_NOTA', aggfunc='size', fill_value=0)
+        Pontuacao_trem = Pontuacao_trem.reset_index()
 
-    # ponto chave para textes
+        nr_os_unicos = df_stage_merge['NR_OS'].unique()
+        Pontuacao_trem = Pontuacao_trem.set_index('NR_OS').reindex(
+            nr_os_unicos, fill_value=0).reset_index()
 
-    df_QUERY_TELA_164_FOTO["ATIVO_TL"] = df_QUERY_TELA_164_FOTO["VAGAO"].astype(
-        str) + df_QUERY_TELA_164_FOTO["SERIE"].astype(str)
-    df_QUERY_TELA_164_FOTO['ATIVO_TL'] = df_QUERY_TELA_164_FOTO['VAGAO'].astype(
-        str).str.zfill(7) + df_QUERY_TELA_164_FOTO['SERIE']
-    df_stage_merge = pd.merge(df_QUERY_TELA_164_FOTO,
-                              df_QUERY_z369, on='ATIVO_TL', how='left')  # ERRO aqui !!
+        Pontuacao_trem = Pontuacao_trem.merge(
+            df_stage_merge[['TREM', 'NR_OS']].drop_duplicates(), on='NR_OS', how='left')
+        Pontuacao_trem = Pontuacao_trem.sort_values(
+            by='M2', ascending=False).drop_duplicates().reset_index(drop=True)
 
-    # df_stage_merge_teste = df_stage_merge[(df_stage_merge['TREM'] == 'C65')]
-    # print("C65 - 2")
-    # print(len(df_stage_merge_teste))
+        Pontuacao_trem = Pontuacao_trem[['TREM', 'M1', 'M2', 'NR_OS']]
+        Pontuacao_trem['TREM'] = Pontuacao_trem['TREM'].astype(str)
+        Pontuacao_trem = Pontuacao_trem[(Pontuacao_trem['TREM'] != "None")]
 
-    df_stage_merge['NR_OS'] = df_stage_merge['NR_OS'].apply(
-        lambda x: str(int(x)) if pd.notnull(x) else '')
-    df_stage_merge = df_stage_merge[(
-        df_stage_merge['Aux_Status'] != "Em processamento")]
+        df = Pontuacao_trem
 
-    # Reiniciar opções de exibição do pandas
-    pd.reset_option('display.max_rows')
-    pd.reset_option('display.max_columns')
-    pd.reset_option('display.width')
-    pd.reset_option('display.max_colwidth')
+        print(df)
+    except Exception as e:
+        print(f"Erro: {e}")
 
-    # Criar a pivot table, preenchendo valores ausentes com 0
-    Pontuacao_trem = pd.pivot_table(
-        df_stage_merge, index='NR_OS', columns='TP_NOTA', aggfunc='size', fill_value=0)
+    df_stage_merge = df_stage_merge.drop_duplicates(
+        subset='NOTA', keep='first')
 
-    # Resetar o índice para facilitar o acesso às colunas
-    Pontuacao_trem = Pontuacao_trem.reset_index()
+    df_stage_merge.to_json(
+        'files\\df_stage_merge_saved.json', orient='records', lines=True)
 
-    # Garantir que todos os NR_OS possíveis estejam no dataframe
-    # Adicionar NR_OS ausentes, preenchendo com zeros
-    nr_os_unicos = df_stage_merge['NR_OS'].unique()
-    Pontuacao_trem = Pontuacao_trem.set_index('NR_OS').reindex(
-        nr_os_unicos, fill_value=0).reset_index()
-
-    # Exibir para testes
-    print(Pontuacao_trem)
-
-    # Teste específico com NR_OS 1989764
-    # Pontuacao_trem_teste = Pontuacao_trem[(Pontuacao_trem['NR_OS'] == 1989764)]
-    # print("C65 - 3")
-    # print(len(Pontuacao_trem_teste))
-
-    # Mesclar com as informações de TREM e NR_OS
-    Pontuacao_trem = Pontuacao_trem.merge(
-        df_stage_merge[['TREM', 'NR_OS']].drop_duplicates(), on='NR_OS', how='left'
-    )
-
-    # Ordenar, remover duplicatas e selecionar colunas relevantes
-    Pontuacao_trem = Pontuacao_trem.sort_values(
-        by='M2', ascending=False).drop_duplicates().reset_index(drop=True)
-
-    Pontuacao_trem = Pontuacao_trem[['TREM', 'M1', 'M2', 'NR_OS']]
-
-    # Converter a coluna TREM para string e filtrar valores não desejados
-    Pontuacao_trem['TREM'] = Pontuacao_trem['TREM'].astype(str)
-    Pontuacao_trem = Pontuacao_trem[(Pontuacao_trem['TREM'] != "None")]
-
-    # Preparar o dataframe final para renderizar
-    df = Pontuacao_trem
-
-    # Mesclar dados adicionais para DF_STAGE_MERGE
-    df_QUERY_TELA_164_FOTO["ATIVO_TL"] = df_QUERY_TELA_164_FOTO["VAGAO"].astype(
-        str) + df_QUERY_TELA_164_FOTO["SERIE"].astype(str)
-    df_stage_merge = pd.merge(df_QUERY_TELA_164_FOTO,
-                              df_QUERY_z369, on='ATIVO_TL', how='left')
-    df_stage_merge['NR_OS'] = df_stage_merge['NR_OS'].apply(
-        lambda x: str(int(x)) if pd.notnull(x) else ''
-    )
-    df_stage_merge['DT_NOTA'] = pd.to_datetime(
-        df_stage_merge['DT_NOTA'], dayfirst=True, errors='coerce'
-    ).dt.strftime('%Y-%m-%d')
-
-    # Apenas para teste, exportar CSV
+    # Apenas para teste, exportar CSVa
     # df_stage_merge.to_csv('files//df_stage_merge.csv', index=False)
-    return render_template('lista.html', df=df, user_info=user_info)
+    return render_template('lista.html', df=df)
 
 
 @app.route('/save_id', methods=['GET'])
 def save_id():
     # Obtém o valor do ID da query string
     # df_stage_merge = pd.read_csv('files//df_stage_merge.csv')
+    # valor_filtro = request.args.get('id')
+    df_stage_merge = pd.read_json(
+        'files\\df_stage_merge_saved.json', orient='records', lines=True)
+
     valor_filtro = request.args.get('id')
 
     if not valor_filtro:
         return "Erro: Nenhum valor de filtro foi fornecido!", 400
 
+    df_stage_merge = pd.read_json(
+        'files\\df_stage_merge_saved.json', orient='records', lines=True)
+
     # Filtra o DataFrame com base no valor fornecido
     df_filtrado = df_stage_merge[df_stage_merge['NR_OS'] == valor_filtro]
     print(len(df_filtrado))
     print(df_filtrado.columns)
+    print(df_filtrado.head())
 
     if df_filtrado.empty:
         return f"Nenhum resultado encontrado para o valor {valor_filtro}", 404
@@ -446,6 +425,9 @@ def save_id():
 @app.route('/notas', methods=['GET'])
 def notas():
     # df_stage_merge = pd.read_csv('files//df_stage_merge.csv')
+
+    df_stage_merge = pd.read_json(
+        'files\\df_stage_merge_saved.json', orient='records', lines=True)
     # Obtém o valor do ID da query string
     valor_filtro = request.args.get('id')
 
