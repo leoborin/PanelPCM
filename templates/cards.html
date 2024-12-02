@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cards by OS</title>
+    <style>
+        @font-face {
+            font-family: 'HindSiliguri-Light';
+            src: url("{{ url_for('static', filename='HindSiliguri-Light.ttf') }}") format('truetype');
+        }
+        body {
+            font: 400 16px 'HindSiliguri-Light', Arial, sans-serif;
+            color: #333;
+            background: linear-gradient(143deg, #eef2f3 0%, #d6e4e5 100%);
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.15);
+        }
+        .card-header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: left;
+            border-bottom: 2px solid #0056b3;
+        }
+        .card-content {
+            padding: 20px;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background-color: #f9f9f9;
+        }
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+            font-size: 14px;
+        }
+        table th {
+            background-color: #d3e1ed;
+            color: rgb(53, 53, 53);
+            font-weight: bold;
+        }
+        table tr:nth-child(even) {
+            background-color: #f3f3f3;
+        }
+        table tr:hover {
+            background-color: #e7f0f7;
+        }
+        h3 {
+            margin: 0 0 10px;
+            font-size: 16px;
+            color: #007bff;
+        }
+        select {
+            margin: 0 5px;
+            padding: 5px 10px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn {
+    background-color: #007bff; /* Azul principal */
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.btn:hover {
+    background-color: #0056b3; /* Azul mais escuro ao passar o mouse */
+    transform: translateY(-2px);
+}
+
+.btn:active {
+    background-color: #003f7f; /* Azul mais escuro no clique */
+    transform: translateY(0);
+}
+
+.btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(38, 143, 255, 0.5); /* Destaque ao focar */
+}
+        select:hover {
+            border-color: #007bff;
+            background-color: #eef6ff;
+        }
+        @media screen and (max-width: 768px) {
+            table th, table td {
+                font-size: 12px;
+                padding: 8px;
+            }
+            .card-header {
+                font-size: 16px;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button id="submit-button" class="btn" >Salvar Retenção</button>
+        <!-- Dynamic Cards -->
+        {% for (nr_os, trem), os_rows in df.groupby(['NR_OS', 'TREM']) %}
+        <div class="card">
+            <div class="card-header">OS: {{ nr_os }} | TREM: {{ trem }}</div>
+            <div class="card-content">
+                {% for ativo_tl, rows in os_rows.groupby('ATIVO_TL') %}
+                <div class="table-wrapper">
+                    <h3>Vagão: {{ ativo_tl }}</h3>
+                    <div style="margin-bottom: 10px;">
+                        Pode ir para TOM: 
+                        <select name="pode_ir_para_tom">
+                            <option value="nao">Não</option>
+                            <option value="sim">Sim</option>
+                        </select>
+                        OBRIGATÓRIA:  
+                        <select name="obrigatoria">
+                            <option value="sim">Sim</option>
+                            <option value="nao">Não</option>
+                        </select>
+                        ISOLADO?:   
+                        <select name="isolado">
+                            <option value="nao">Não</option>
+                            <option value="sim">Sim</option>
+                            
+                        </select>
+                        REC. SISTEMA:   
+                        <select name="rec_sistema">
+                            <option value="sim">Sim</option>
+                            <option value="nao">Não</option>
+                        </select>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nº</th>
+                                <th>VAGÃO</th>
+                                <th>NOTA</th>
+                                <th>DT_NOTA</th>
+                                <th>TEXTO</th>
+                                <th>Texto_Item</th>
+                                <th>Tp Nota</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for index, row in rows.iterrows() %}
+                            <tr>
+                                <td>{{ row['SEQUENCIA'] }}</td>
+                                <td>{{ row['ATIVO_TL'] }}</td>
+                                <td>{{ row['NOTA'] }}</td>
+                                <td>{{ row['DT_NOTA'] }}</td>
+                                <td>{{ row['TEXTO'] }}</td>
+                                <td>{{ row['Texto_Causa'] }}</td>
+                                <td>{{ row['TP_NOTA'] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <script>
+document.addEventListener('DOMContentLoaded', () => {
+    const submitButton = document.querySelector('#submit-button');
+
+    submitButton.addEventListener('click', () => {
+        const cards = document.querySelectorAll('.card');
+        const selectedData = [];
+
+        cards.forEach(card => {
+            const nrOs = card.querySelector('.card-header').textContent.split('|')[0].trim().split(':')[1].trim();
+            const trem = card.querySelector('.card-header').textContent.split('|')[1].trim().split(':')[1].trim();
+
+            const tables = card.querySelectorAll('.table-wrapper');
+            tables.forEach(tableWrapper => {
+                const ativoTl = tableWrapper.querySelector('h3').textContent.split(':')[1].trim();
+
+                const podeIrParaTom = tableWrapper.querySelector('select[name="pode_ir_para_tom"]').value;
+                const obrigatoria = tableWrapper.querySelector('select[name="obrigatoria"]').value;
+                const isolado = tableWrapper.querySelector('select[name="isolado"]').value;
+                const recSistema = tableWrapper.querySelector('select[name="rec_sistema"]').value;
+
+                const rows = tableWrapper.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const cols = row.querySelectorAll('td');
+                    selectedData.push({
+                        NR_OS: nrOs,
+                        TREM: trem,
+                        ATIVO_TL: ativoTl,
+                        Pode_ir_para_TOM: podeIrParaTom,
+                        Obrigatoria: obrigatoria,
+                        Isolado: isolado,
+                        Rec_Sistema: recSistema,
+                        Sequencia: cols[0].textContent,
+                        VAGÃO: cols[1].textContent,
+                        NOTA: cols[2].textContent,  <!-- Corrigido para incluir 'NOTA' -->
+                        DT_NOTA: cols[3].textContent,
+                        TEXTO: cols[4].textContent,
+                        Texto_Causa: cols[5].textContent,
+                        TP_NOTA: cols[6].textContent
+                    });
+                });
+            });
+        });
+
+        // Enviar os dados para o servidor
+        fetch('/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(selectedData)
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = `/cardsGeral`;
+            } else {
+                return response.json().then(data => {
+                    throw new Error(data.message || 'Erro desconhecido');
+                });
+            }
+        })
+        .then(data => alert(data.message))
+        .catch(error => console.error('Erro:', error.message));
+    });
+});
+    </script>
+    
+    
+    
+</body>
+</html>

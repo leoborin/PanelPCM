@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Andamento do Script</title>
+</head>
+<body>
+    <h1>Monitoramento do Script</h1>
+    <div id="output"></div>
+
+    <script>
+        // Abre a conexão SSE com o servidor
+        const eventSource = new EventSource("/atualizar");
+
+        // Recebe os dados em tempo real do backend
+        eventSource.onmessage = function(event) {
+            // Exibe a saída do script no div "output"
+            const outputDiv = document.getElementById("output");
+            outputDiv.innerHTML += `<p>${event.data}</p>`;
+        };
+
+        // Se ocorrer um erro na conexão SSE
+        eventSource.onerror = function(event) {
+            console.error("Erro ao receber dados:", event);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,324 @@
+<html lang="en">
+    <style>
+        @font-face {
+            font-family: 'HindSiliguri-Light';
+            src: url("{{ url_for('static', filename='HindSiliguri-Light.ttf') }}") format('truetype');
+        }
+        body {
+            font: 400 18px 'HindSiliguri-Light';
+            background: linear-gradient(143deg, #f4f4f4 0%, rgb(211, 211, 211) 77%, rgb(221, 221, 221) 100%);
+            backdrop-filter: blur(10px);
+            background-size: cover;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 80%;
+            margin: 0 auto;
+            text-align: center;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .search-bar {
+            margin-bottom: 20px;
+            text-align: left;
+            display: flex;
+            justify-content: space-between; /* Coloca os itens de filtro nas extremidades */
+            align-items: center;
+            gap: 10px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .filter-select {
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            margin: 0 auto;
+            border-collapse: collapse;
+            background-color: #f7f7f7;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.15);
+            table-layout: auto;
+            word-wrap: break-word;
+        }
+        table th, table td {
+            padding: 8px 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+            font-size: 13px;
+            word-break: break-word;
+            white-space: nowrap;
+        }
+        table th {
+            background-color: #eaeaea;
+            color: #444;
+        }
+        table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        table tr:hover {
+            background-color: #f3f3f3;
+        }
+        .table-wrapper {
+            width: 100%;
+            max-height: 80%;
+            overflow-y: auto;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.15);
+            background-color: #f7f7f7;
+        }
+        .btn {
+            background-color: #007bff;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataFrame Display</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Lista Notas</h1>
+        <div class="search-bar">
+            <input
+                type="text"
+                id="search-input"
+                class="search-input"
+                placeholder="Digite para filtrar pela coluna Vagão..."
+                onkeyup="filterTable()"
+            />
+            <select id="base-filter" class="filter-select" onchange="filterTable()">
+                <option value="TODAS">TODAS</option>
+                <option value="SAP_Arquivo_LOCAL">SAP_Arquivo_LOCAL</option>
+                <option value="SAP_STAGE">SAP_STAGE</option>
+            </select>
+            <button onclick="exportar()" class="btn">Exportar</button>
+        </div>
+        <div style="text-align: left; margin: 20px 0;">
+            <button onclick="toggleSelectAll()" class="btn" id="select-all-btn">Selecionar Todos</button>
+            <button onclick="enviarParaServidor()" class="btn">Indicar para Retenção</button>
+
+        </div>
+        <div class="table-wrapper">
+            <table id="data-table">
+                <thead>
+                    <tr>
+                        <th>Reter</th>
+                        <th>VAGAO</th>
+                        <th>SERIE</th>
+                        <th>TREM</th>
+                        <th>SEQUENCIA</th>
+                        <th>LOCAL</th>
+                        <th>ORIGEM</th>
+                        <th>DESTINO</th>
+                        <th>NR_OS</th>
+                        <th>ATIVO_TL</th>
+                        <th>NOTA</th>
+                        <th>DT_NOTA</th>
+                        <th>Notificador</th>
+                        <th>Texto_Causa</th>
+                        <th>TP_NOTA</th>
+                        <th>TEXTO</th>
+                        <th>Texto_Item</th>
+                        <th>Texto_AVARIA</th>
+                        <th>DATA_QMDAT</th>
+                        <th>CodFalha</th>
+                        <th>Flag</th>
+                        <th>Aux_Status</th>
+                        <th>BASE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for index, row in df.iterrows() %}
+                    <tr {% if row['TP_NOTA'] == 'M2' %} style="background-color: red;" {% endif %}>
+                        <td>
+                            <input 
+                                type="checkbox" 
+                                class="row-checkbox" 
+                                data-ativo-tl="{{ row['ATIVO_TL'] }}" 
+                                onclick="selectMatchingCheckboxes(this)"
+                            />
+                        </td>
+                        <td>{{ row['VAGAO'] }}</td>
+                        <td>{{ row['SERIE'] }}</td>
+                        <td>{{ row['TREM'] }}</td>
+                        <td>{{ row['SEQUENCIA'] }}</td>
+                        <td>{{ row['LOCAL'] }}</td>
+                        <td>{{ row['ORIGEM'] }}</td>
+                        <td>{{ row['DESTINO'] }}</td>
+                        <td>{{ row['NR_OS'] }}</td>
+                        <td>{{ row['ATIVO_TL'] }}</td>
+                        <td>{{ row['NOTA'] }}</td>
+                        <td>{{ row['DT_NOTA'] }}</td>
+                        <td>{{ row['Notificador'] }}</td>
+                        <td>{{ row['Texto_Causa'] }}</td>
+                        <td>{{ row['TP_NOTA'] }}</td>
+                        <td>{{ row['TEXTO'] }}</td>
+                        <td>{{ row['Texto_Item'] }}</td>
+                        <td>{{ row['Texto_AVARIA'] }}</td>
+                        <td>{{ row['DATA_QMDAT'] }}</td>
+                        <td>{{ row['CodFalha'] }}</td>
+                        <td>{{ row['Flag'] }}</td>
+                        <td>{{ row['Aux_Status'] }}</td>
+                        <td>{{ row['BASE'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        let allSelected = false; // Variável para rastrear o estado do botão "Selecionar Todos"
+
+        function toggleSelectAll() {
+            const checkboxes = document.querySelectorAll(".row-checkbox");
+            allSelected = !allSelected; // Alterna o estado entre selecionado e não selecionado
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = allSelected; // Marca ou desmarca todos os checkboxes
+            });
+
+            // Atualiza o texto do botão com base no estado atual
+            const selectAllBtn = document.getElementById("select-all-btn");
+            selectAllBtn.textContent = allSelected ? "Desmarcar Todos" : "Selecionar Todos";
+        }
+
+        function selectMatchingCheckboxes(checkbox) {
+            const ativoTLValue = checkbox.getAttribute("data-ativo-tl");
+            const isChecked = checkbox.checked;
+
+            const allCheckboxes = document.querySelectorAll(".row-checkbox");
+            allCheckboxes.forEach(checkbox => {
+                if (checkbox.getAttribute("data-ativo-tl") === ativoTLValue) {
+                    checkbox.checked = isChecked;
+                }
+            });
+        }
+
+        function filterTable() {
+            const searchValue = document.getElementById("search-input").value.toLowerCase();
+            const baseFilterValue = document.getElementById("base-filter").value;
+
+            const rows = document.querySelectorAll("#data-table tbody tr");
+
+            rows.forEach(row => {
+                const cellVagao = row.cells[1].textContent.toLowerCase();
+                const cellBase = row.cells[22].textContent; // A coluna BASE é a 22ª (índice 21)
+
+                const matchesSearch = cellVagao.includes(searchValue);
+                const matchesBaseFilter = baseFilterValue === "TODAS" || cellBase === baseFilterValue;
+
+                if (matchesSearch && matchesBaseFilter) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        }
+
+        function exportar() {
+    const table = document.getElementById("data-table"); // Seleciona a tabela
+    const rows = table.querySelectorAll("tr"); // Pega todas as linhas da tabela
+    const data = [];
+
+    // Adiciona os cabeçalhos
+    const headerCells = table.querySelectorAll("thead th");
+    const headerRow = Array.from(headerCells).map(cell => cell.innerText);
+    data.push(headerRow);
+
+    // Itera pelas linhas e filtra apenas as que têm o checkbox marcado
+    rows.forEach((row) => {
+        const checkbox = row.querySelector(".row-checkbox"); // Seleciona o checkbox
+        if (checkbox && checkbox.checked) { // Verifica se está marcado
+            const cells = row.querySelectorAll("td"); // Seleciona as células da linha
+            const rowData = Array.from(cells).map(cell => cell.innerText); // Captura o texto das células
+            data.push(rowData); // Adiciona os dados ao array
+        }
+    });
+
+    // Verifica se há dados para exportar
+    if (data.length > 1) {
+        // Extrai o ID da URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id') || 'default'; // Pega o id da URL ou usa 'default' se não existir
+
+        // Cria uma nova planilha do Excel
+        const worksheet = XLSX.utils.aoa_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Tabela");
+
+        // Salva o arquivo com o ID no nome
+        XLSX.writeFile(workbook, `Notas_Selecionadas_TREM_OS_${id}.xlsx`);
+    } else {
+        alert("Nenhuma linha marcada para exportar.");
+    }
+}
+function enviarParaServidor() {
+    const rows = document.querySelectorAll("#data-table tbody tr");
+    const selectedData = [];
+
+    rows.forEach(row => {
+        const checkbox = row.querySelector(".row-checkbox");
+        if (checkbox && checkbox.checked) {
+            const rowData = Array.from(row.querySelectorAll("td")).map(cell => cell.textContent.trim());
+            selectedData.push(rowData);
+        }
+    });
+
+    if (selectedData.length > 0) {
+        // Envia os dados para o servidor usando POST
+        fetch("/salvar-df", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ data: selectedData })
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = `/sucesso`
+            } else {
+                alert("Erro ao salvar os dados no servidor.");
+            }
+        })
+        .catch(error => {
+            console.error("Erro:", error);
+            alert("Erro ao se conectar com o servidor.");
+        });
+    } else {
+        alert("Nenhuma linha selecionada para salvar.");
+    }
+}
+
+    </script>
+</body>
+</html>

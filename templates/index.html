@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Notas Trem</title>
+    <style>
+        @font-face {
+            font-family: 'HindSiliguri-Light';
+            src: url("{{ url_for('static', filename='HindSiliguri-Light.ttf') }}") format('truetype');
+        }
+
+        body {
+            font: 400 14px 'HindSiliguri-Light';
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .logo-container img {
+            max-width: 100px; /* Reduzido o tamanho da imagem */
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        table th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .btn {
+            background-color: #007bff;
+            color: #fff;
+            padding: 14px 28px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            margin: 12px 0;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 10px;
+            color: #007bff;
+            text-decoration: none;
+            font-size: 16px;
+            transition: color 0.3s;
+        }
+
+        a:hover {
+            color: #0056b3;
+        }
+
+        .file-input-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .file-input-container span {
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .file-input-container input[type="file"] {
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .file-input-container button {
+            width: 100%;
+            max-width: 200px;
+            padding: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo da empresa">
+        </div>
+        <h1>Painel Notas Trem</h1>
+
+        <table id="data-table">
+            <thead>
+                <tr>
+                    <th>Tabela</th>
+                    <th>Data Consulta</th>
+                    <th>QTD Linhas</th>
+                    <th>Resultado</th>
+                    <th>Última Data</th>
+                    <th>Data Update STAGE</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for index, row in df.iterrows() %}
+                <tr>
+                    <td>{{ row['tabela'] }}</td>
+                    <td>{{ row['DataConsulta'] }}</td>
+                    <td>{{ row['QTD_Linhas'] }}</td>
+                    <td>{{ row['Resultado'] }}</td>
+                    <td>{{ row['ultimaData'] }}</td>
+                    <td>{{ row['dataUpdateSTAGE'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <form action="/upload" method="POST" enctype="multipart/form-data" class="file-input-container">
+            <span>Escolha um arquivo - LOCAL</span>
+            <input type="file" name="file">
+            <button type="submit" class="btn">Listar Trens</button>
+        </form>
+
+        <div class="action-buttons">
+            <button onclick="detalhar()" class="btn">Atualizar Bases</button>
+        </div>
+
+        <a href="/dados_NASS">Dados Avançados</a>
+    </div>
+
+    <footer style="text-align: center; margin-top: 30px; font-size: 14px; color: #333;">
+        Criado por Leonardo Borim de Almeida - 014 996003468
+    </footer>
+
+    <script>
+        function detalhar() {
+            window.location.href = `/lista`;
+        }
+    </script>
+</body>
+</html>

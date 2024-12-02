@@ -1,0 +1,170 @@
+<html lang="en">
+    <style>
+        @font-face {
+            font-family: 'HindSiliguri-Light';
+            src: url("{{ url_for('static', filename='HindSiliguri-Light.ttf') }}") format('truetype');
+        }
+        body {
+            font: 400 18px 'HindSiliguri-Light';
+            background: linear-gradient(143deg, #f4f4f4 0%, rgb(211, 211, 211) 77%, rgb(221, 221, 221) 100%);
+            backdrop-filter: blur(10px);
+            background-size: cover;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 80%;
+            margin: 0 auto;
+            text-align: center;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .search-bar {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            margin: 0 auto;
+            border-collapse: collapse;
+            background-color: #f7f7f7;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        table th, table td {
+            padding: 8px 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+            font-size: 18px;
+            word-break: break-word;
+        }
+        table th {
+            background-color: #eaeaea;
+            color: #444;
+        }
+        table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        table tr:hover {
+            background-color: #f3f3f3;
+        }
+        .btn {
+            background-color: #007bff;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataFrame Display</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Lista Vagões</h1>
+        <div class="search-bar" style="display: flex; align-items: center; gap: 10px;">
+            <input
+                type="text"
+                id="search-input"
+                class="search-input"
+                placeholder="Digite para filtrar pela coluna Vagão..."
+                onkeyup="filterTable()"
+            />
+            <button onclick="detalhar()" class="btn">Detalhar</button>
+        </div>
+        <table id="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 10%;">SEQUENCIA</th>
+                    <th style="width: 30%;">ATIVO_TL</th>
+                    <th style="width: 25%;">M1</th>
+                    <th style="width: 25%;">M2</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for index, row in df.iterrows() %}
+                <tr>
+                    <td>{{ row['SEQUENCIA'] }}</td>
+                    <td>{{ row['ATIVO_TL'] }}</td>
+                    <td>{{ row['M1'] }}</td>
+                    <td class="m2-cell">{{ row['M2'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+    function filterTable() {
+        // Get the input value
+        const input = document.getElementById("search-input").value.toLowerCase();
+        const table = document.getElementById("data-table");
+        const rows = table.getElementsByTagName("tr");
+
+        // Loop through table rows and hide those that don't match the search
+        for (let i = 1; i < rows.length; i++) {
+            const cell = rows[i].getElementsByTagName("td")[1]; // Column TREM
+            if (cell) {
+                const text = cell.textContent || cell.innerText;
+                rows[i].style.display = text.toLowerCase().includes(input) ? "" : "none";
+            }
+        }
+    }
+
+    function detalhar() {
+        // Capture the `id` from the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');  // Get the id parameter from the URL
+        
+        if (id) {
+            window.location.href = `/notas?id=${id}`;  // Redirect to the detailed page with the ID
+        } else {
+            alert("ID não encontrado na URL!");
+        }
+    }
+
+    // Apply conditional formatting to M2 column
+    function applyConditionalFormatting() {
+        const table = document.getElementById("data-table");
+        const rows = table.getElementsByTagName("tr");
+
+        for (let i = 1; i < rows.length; i++) {
+            const cell = rows[i].getElementsByClassName("m2-cell")[0]; // Column M2
+            if (cell) {
+                const value = parseFloat(cell.textContent || cell.innerText);
+                if (value > 0) {
+                    cell.style.color = "white";
+                    cell.style.backgroundColor = "red";
+                }
+            }
+        }
+    }
+
+    // Run the conditional formatting after the page loads
+    document.addEventListener("DOMContentLoaded", applyConditionalFormatting);
+    </script>
+</body>
+</html>

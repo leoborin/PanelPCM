@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataFrame Display</title>
+    <style>
+        @font-face {
+            font-family: 'HindSiliguri-Light';
+            src: url("{{ url_for('static', filename='HindSiliguri-Light.ttf') }}") format('truetype');
+        }
+        body {
+            font: 400 18px 'HindSiliguri-Light', sans-serif;
+            background: linear-gradient(143deg, #f4f4f4 0%, rgb(211, 211, 211) 77%, rgb(221, 221, 221) 100%);
+            backdrop-filter: blur(10px);
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 90%;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ddd;
+        }
+        h1 {
+            font-size: 28px;
+            color: #444;
+        }
+        .search-bar {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .search-input {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        table th, table td {
+            padding: 12px;
+            text-align: center;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            white-space: nowrap; /* Prevent line breaks */
+        }
+        table th {
+            background-color: #f5f5f5;
+            color: #333;
+            font-weight: bold;
+        }
+        table td {
+            background-color: #fff;
+        }
+        table tr:nth-child(even) td {
+            background-color: #f9f9f9;
+        }
+        table tr:hover td {
+            background-color: #f3f3f3;
+        }
+        .col-defeitos {
+            white-space: normal; /* Allow line breaks */
+            max-width: 300px; /* Adjust this value for maximum width */
+            word-break: break-word; /* Ensure long words break correctly */
+        }
+        .btn {
+            background-color: #007bff;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- User Info Display -->
+        <div style="position: absolute; top: 20px; right: 20px; font-size: 18px; font-weight: bold; color: #333;">
+            {{ user_info }}
+        </div>
+
+        <!-- Title Section -->
+        <div class="header">
+            <h1>Lista Trem</h1>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <input
+                type="text"
+                id="search-input"
+                class="search-input"
+                placeholder="Digite para filtrar pela coluna TREM..."
+                onkeyup="filterTable()"
+            />
+        </div>
+
+        <!-- Data Table -->
+        <table id="data-table">
+            <thead>
+                <tr>
+                    <th>NR_OS</th>
+                    <th>TREM</th>
+                    <th>ATIVO_TL</th>
+                    <th>NOTA</th>
+                    <th>Pode_ir_para_TOM</th>
+                    <th>Obrigatoria</th>
+                    <th>Isolado</th>
+                    <th>Rec_Sistema</th>
+                    <th>Sequencia</th>
+                    <th>DT_NOTA</th>
+                    <th class="col-defeitos">Defeitos</th>
+                    <th>data_now</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for index, row in df.iterrows() %}
+                <tr>
+                    <td>{{ row['NR_OS'] }}</td>
+                    <td>{{ row['TREM'] }}</td>
+                    <td>{{ row['ATIVO_TL'] }}</td>
+                    <td>{{ row['NOTA'] }}</td>
+                    <td>{{ row['Pode_ir_para_TOM'] }}</td>
+                    <td>{{ row['Obrigatoria'] }}</td>
+                    <td>{{ row['Isolado'] }}</td>
+                    <td>{{ row['Rec_Sistema'] }}</td>
+                    <td>{{ row['Sequencia'] }}</td>
+                    <td>{{ row['DT_NOTA'] }}</td>
+                    <td class="col-defeitos">{{ row['Defeitos'] }}</td>
+                    <td>{{ row['data_now'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        function filterTable() {
+            const input = document.getElementById("search-input").value.toLowerCase();
+            const rows = document.querySelectorAll("#data-table tbody tr");
+            rows.forEach(row => {
+                const cellText = row.cells[0]?.textContent.toLowerCase() || "";
+                row.classList.toggle("hidden", !cellText.includes(input));
+            });
+        }
+    </script>
+</body>
+</html>
