@@ -29,11 +29,64 @@ if not os.path.exists(UPLOAD_FOLDER):
 global df_stage_merge
 
 
+
+
+@app.route('/semretencao', methods=['GET'])
+def semretencao():
+    print("semretencao")
+
+    # Obter o parâmetro `id` da URL, que contém NR_OS e TREM
+    OSfilters = request.args.get('id')
+    if OSfilters:
+        # Divide o parâmetro em NR_OS e TREM usando a vírgula
+        OSfilters = OSfilters.split(',')
+        if len(OSfilters) == 2:
+            nr_os = OSfilters[0].strip()  # NR_OS
+            trem = OSfilters[1].strip()  # TREM
+
+            print(f"NR_OS: {nr_os}, TREM: {trem}")
+        else:
+            print("Parâmetro 'id' não contém valores válidos para NR_OS e TREM.")
+            return "Erro: Parâmetro 'id' inválido", 400
+    else:
+        print("Parâmetro 'id' não encontrado na URL.")
+        return "Erro: Parâmetro 'id' não encontrado", 400
+
+    # Processamento do DataFrame
+    geralCards = pd.read_csv('files//submitted_data.csv')
+    
+    # Obter data e hora atual
+    data_atual = datetime.now()
+
+    # Criar uma nova linha para o DataFrame
+# Criar uma nova linha para o DataFrame
+    new_row = pd.DataFrame({'NR_OS': [nr_os], 'TREM': [trem], 'ATIVO_TL': ["Sem Retencões"]})
+    new_row['data_now'] = data_atual
+
+    new_row['ID'] = data_atual.strftime('%Y%m%d%H%M%S')  # Formatar como string de ID
+    new_row['data_now'] = new_row['data_now'].dt.strftime('%d/%m/%Y %H:%M:%S')
+
+
+    # Concatenar a nova linha ao DataFrame
+    geralCards = pd.concat([new_row, geralCards], ignore_index=True)
+    print(geralCards.head(5))
+
+    # Salvar o DataFrame atualizado de volta no arquivo CSV
+    geralCards.to_csv('files//submitted_data.csv', index=False)
+
+    # Redirecionar para outra rota
+    return redirect(url_for('cardsGeral'))
+
+
 @app.route('/delete_item/<int:id>', methods=['POST'])
 def delete_item(id):
+    print("Excluir")
+
     geralCards = pd.read_csv('files//submitted_data.csv')
+    print(geralCards.head(5))
     # Filtra o DataFrame removendo o item pelo ID
-    geralCards = geralCards[geralCards['nr_os'] != id]
+    geralCards = geralCards[geralCards['NR_OS'] != id]
+
     geralCards.to_csv('files//submitted_data.csv', index=False)
 
     return redirect(url_for('cardsGeral'))
@@ -52,9 +105,9 @@ def salvar_df():
         # Converte para DataFrame
         columns = [
             "Reter", "VAGAO", "SERIE", "TREM", "SEQUENCIA", "LOCAL", "ORIGEM",
-            "DESTINO", "NR_OS", "ATIVO_TL", "NOTA", "DT_NOTA", "Notificador",
+            "DESTINO", "NR_OS", "ATIVO_TL", "DESC_LOTACAO" ,"NOTA", "DT_NOTA", "Notificador",
             "Texto_Causa", "TP_NOTA", "TEXTO", "Texto_Item", "Texto_AVARIA",
-            "DATA_QMDAT", "CodFalha", "Flag", "Aux_Status", "BASE"
+            "DATA_QMDAT", "CodFalha", "Flag", "Aux_Status", "BASE", 'Qtd_vg_Por_OS','nt_critica'
         ]
         df = pd.DataFrame(rows, columns=columns)
 
@@ -87,29 +140,87 @@ def submit():
             'NR_OS': item.get('NR_OS'),
             'TREM': item.get('TREM'),
             'ATIVO_TL': item.get('ATIVO_TL'),
+            'DESC_LOTACAO': item.get('DESC_LOTACAO'),
             'NOTA': item.get('NOTA'),
             'Pode_ir_para_TOM': item.get('Pode_ir_para_TOM'),
             'Obrigatoria': item.get('Obrigatoria'),
+            'Local_Retencao': item.get('Local_Retencao'),
             'Isolado': item.get('Isolado'),
             'Rec_Sistema': item.get('Rec_Sistema'),
             'Sequencia': item.get('Sequencia'),
             'DT_NOTA': item.get('DT_NOTA'),
             'TEXTO': item.get('TEXTO'),
             'Texto_Causa': item.get('Texto_Causa'),
-            'TP_NOTA': item.get('TP_NOTA')
+            'TP_NOTA': item.get('TP_NOTA'),
+            'Local': item.get('Local_Retencao'),
+            'Observacao_Retencao' : item.get('Observacao'),
+            'Qtd_vg_Por_OS' : item.get('Qtd_vg_Por_OS'),
+            'DataHoraPassagem': item.get('DataHoraPassagem')  # 1515
         })
 
     # Criar um DataFrame com os dados processados
     df_submitted = pd.DataFrame(processed_data)
+    df_submitted['DataHoraPassagem'] = pd.to_datetime(df_submitted['DataHoraPassagem'])
+    df_submitted['DataHoraPassagem'] = df_submitted['DataHoraPassagem'].dt.strftime('%d/%m/%Y %H:%M')
+
+
     df_submitted_OLD = pd.read_csv('files//submitted_data.csv')
     data_atual = datetime.now()
     data_atual = data_atual.strftime("%d/%m/%Y %H:%M:%S")
+    df_submitted = df_submitted.fillna(' ')
+    df_submitted = df_submitted.replace('NaN', ' ')
 
     df_submitted['data_now'] = data_atual
+    df_submitted['data_now'] = data_atual
+    df_submitted['data_now2'] = pd.to_datetime(
+        df_submitted['data_now'],
+        format='%d/%m/%Y %H:%M:%S',
+        errors='coerce'
+    )
+
+
+    # Criar um DataFrame com os dados processados
+    df_submitted = pd.DataFrame(processed_data)
+    df_submitted['DataHoraPassagem'] = pd.to_datetime(df_submitted['DataHoraPassagem'])
+    df_submitted['DataHoraPassagem'] = df_submitted['DataHoraPassagem'].dt.strftime('%d/%m/%Y %H:%M')
+    #df_submitted = df_submitted['Sequencia'].astype(int).astype(str)
+
+    # Carregar o DataFrame antigo
+    df_submitted_OLD = pd.read_csv('files//submitted_data.csv')
+    
+    # Obter a data e hora atual
+    data_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    
+    # Substituir valores NaN por espaços em branco
+    df_submitted = df_submitted.fillna(' ')
+    df_submitted = df_submitted.replace('NaN', ' ')
+
+    # Adicionar as colunas de data atual
+    df_submitted['data_now'] = data_atual
+    df_submitted['data_now2'] = pd.to_datetime(df_submitted['data_now'], format='%d/%m/%Y %H:%M:%S', errors='coerce')
+
+    # Criar a nova coluna ID com a formatação desejada
+    df_submitted['ID'] = df_submitted['data_now2'].dt.strftime('%Y%m%d%H%M%S')
+
+    # Agora inicialize a variável 'result' corretamente
+    result = df_submitted.copy()  # Inicializando 'result' com os dados de df_submitted
+
+    # Ajustar 'NR_OS' e 'NOTA' para os formatos desejados
+# Garantir que 'NR_OS' e 'NOTA' sejam convertidos corretamente
+    if 'NR_OS' in result.columns:
+        result['NR_OS'] = pd.to_numeric(result['NR_OS'], errors='coerce').fillna(0).astype(int).astype(str)
+
+    if 'NOTA' in result.columns:
+        result['NOTA'] = pd.to_numeric(result['NOTA'], errors='coerce').fillna(0).astype(int).astype(str)
+
+    # Concatenar com o DataFrame antigo, mantendo apenas as linhas únicas com base em 'NOTA'
     result = pd.concat([df_submitted, df_submitted_OLD])
     result = result.drop_duplicates(subset=['NOTA'])
 
-    # Exemplo de salvar em CSV (pode ser ajustado para banco de dados ou outro método)
+    # Exibir as primeiras 5 linhas para verificação
+    print(result.head(5))
+
+    # Salvar o DataFrame result em um arquivo CSV
     result.to_csv('files//submitted_data.csv', index=False)
 
     return redirect(url_for('cardsGeral'))
@@ -120,9 +231,23 @@ def email():
     print("email")
     # Carregar o arquivo CSV
     geralCards = pd.read_csv('files//submitted_data.csv')
+    geralCards = geralCards.replace('nao', 'NÃO')
+    geralCards = geralCards.replace('sim', 'SIM')
+    geralCards['Sequencia'] = geralCards['Sequencia'].fillna(0).astype(float).astype(int)
+    geralCards = geralCards.drop_duplicates(
+    subset=['NOTA'], keep='last')
+    #
+
+
 
     # Filtrar apenas as linhas com TP_NOTA == 'M2'
-    geralCards_Email = geralCards[geralCards['TP_NOTA'] == 'M2']
+    geralCards_Email = geralCards[
+        (geralCards['TP_NOTA'].isin(['M2', 'M9', 'M6'])) | 
+        (geralCards['Observacao_Retencao'].notna()) |
+        (geralCards['ATIVO_TL'] == 'Sem Retencões') 
+    ]
+    geralCards = geralCards['Sequencia'].astype(int).astype(str)
+
 
     # Obter o parâmetro `id` da URL e converter para uma lista
     OSfilters = request.args.get('id')  # Exemplo: "1989210,1989564"
@@ -130,30 +255,42 @@ def email():
         OSfilters = OSfilters.split(',')  # ["1989210", "1989564"]
         OSfilters = [int(id.strip())
                      for id in OSfilters]  # Convertendo para inteiros
+    print("OSfilters")   
+    
+    print(OSfilters)
+        
 
     # Filtrando o DataFrame com os IDs fornecidos
     geralCards_Email = geralCards_Email[geralCards_Email['NR_OS'].isin(
         OSfilters)]
 
-    geralCards_Email['Defeitos'] = geralCards_Email['TEXTO'].astype(str) + \
-        " " + geralCards_Email['Texto_Causa'].astype(str)
+    geralCards_Email['Defeitos'] = geralCards_Email['TEXTO'].fillna("").astype(str) + \
+        " " + geralCards_Email['Texto_Causa'].fillna("").astype(str)
 
     # Agrupar por 'NR_OS' e concatenar os defeitos
     result = geralCards_Email.groupby(['NR_OS', 'ATIVO_TL'], as_index=False).agg({
         'TREM': 'first',  # Manter o primeiro valor
+        'Qtd_vg_Por_OS': 'first',
+        'DataHoraPassagem' : 'first',
         'NOTA': 'first',  # Manter o primeiro valor
         'Pode_ir_para_TOM': 'first',
         'Obrigatoria': 'first',
+        'Local': 'first',
         'Isolado': 'first',
         'Rec_Sistema': 'first',
         'Sequencia': 'first',
         'DT_NOTA': 'first',
         # Concatenar os valores de 'Defeitos'
         'Defeitos': lambda x: ' + '.join(x.astype(str)),
+        'Observacao_Retencao':'first',
         'data_now': 'first'  # Manter o primeiro valor
     })
     # Depurar o número de resultados
     print(len(result))
+    result['Categoria'] = result['NR_OS'].ne(result['NR_OS'].shift()).cumsum().apply(lambda x: 'A' if x % 2 == 0 else 'B')
+    result = result.fillna("")
+    
+    result
 
     # Renderizar o template HTML com o DataFrame filtrado
     return render_template('email.html', df=result)
@@ -171,9 +308,14 @@ def sucesso():
 def cardsGeral():
     print("cardsGeral")
     geralCards = pd.read_csv('files//submitted_data.csv')
+    geralCards = geralCards.fillna(' ')
+    geralCards = geralCards.replace('NaN', ' ')
+
 
     # Garantir que a coluna 'data_now' esteja no formato datetime
-    geralCards['data_now'] = pd.to_datetime(geralCards['data_now'])
+    # geralCards['data_now'] = pd.to_datetime(geralCards['data_now'])
+    geralCards['data_now'] = pd.to_datetime(
+        geralCards['data_now'], format="%d/%m/%Y %H:%M:%S")
 
     # Organizar o DataFrame pela coluna 'data_now'
 
@@ -247,16 +389,45 @@ def lista():
     try:
         print("leitura df_QUERY_z369")
         df_QUERY_z369 = pd.read_json(r'files\df_stage_Nota.json', lines=True)
+        df_QUERY_z369['Aux_Status'] = df_QUERY_z369['Aux_Status'].replace('Pendente', 'MSPN')
+        df_QUERY_z369['Aux_Status'] = df_QUERY_z369['Aux_Status'].replace('Em processamento', 'MSPR')
 
-        print("leitura df_QUERY_notasExport")
-        df_QUERY_notasExport = pd.read_excel(r'uploads//nota_export.xlsx')
+# --------------------------------
+        try:
+            # Lista de novos cabeçalhos
+            colunas = [
+                "Data da nota", "Hora da nota", "Equipam.", "Parada", "Notificador", "TpNota",
+                "CódFalha", "Descrição", "Texto do item", "Texto da causa", "Status do sistema",
+                "Nota", "Centro trab.respons.", "Ordem"
+            ]
 
+            # Carregar o arquivo
+            arquivo = r'uploads//nota_export.xlsx'
+            df_QUERY_notasExport = pd.read_excel(arquivo, header=0)
+
+            # Verifique se alguma coluna contém "Unnamed"
+            if any("Unnamed" in col for col in df_QUERY_notasExport.columns):
+                # Substitua pelos novos cabeçalhos
+                df_QUERY_notasExport.columns = colunas
+                print(
+                    "Alguma coluna continha 'Unnamed'. Cabeçalhos substituídos com sucesso!")
+
+            else:
+                print("Nenhuma coluna contém 'Unnamed'. Mantendo o DataFrame original.")
+
+        except Exception as e:
+            # Captura qualquer erro e retorna uma mensagem personalizada
+            error_message = f" PARA CORRIGIR SALVE O ARQUIVO ANEXADO NOVAMENTE, COM 'SALVAR COMO' NO SEU COMPUTADOR e ANEXE NOVAMENTE.Ocorreu um erro ao processar o arquivo: {str(e)}."
+            print(error_message)
+            return jsonify(message=error_message), 500
+# --------------------------------
         print("leitura df_QUERY_TELA_164_FOTO")
         df_QUERY_TELA_164_FOTO = pd.read_json(
             r'files\df_QUERY_TELA_164_FOTO.json', lines=True)
 
         if not df_QUERY_notasExport.empty:
             print("nota_export OK")
+            print(df_QUERY_notasExport)
             colunas_atuais = df_QUERY_notasExport.columns
             df_QUERY_notasExport_filtred = df_QUERY_notasExport[(df_QUERY_notasExport['Status do sistema'] == 'MSPN') |
                                                                 (df_QUERY_notasExport['Status do sistema'] == 'MSPR')]
@@ -296,6 +467,7 @@ def lista():
                 [df_QUERY_z369, df_QUERY_notasExport_filtred])
             df_resultado_Export_z369_final = df_concatenado.drop_duplicates(
                 subset=['NOTA'], keep='last')
+            df_QUERY_z369 = df_resultado_Export_z369_final
         else:
             user_info = "Sem dados Locais - APENAS STAGE"
             print("nota_export NOK")
@@ -309,27 +481,44 @@ def lista():
             print("df_QUERY_z369 OK")
         else:
             print("df_QUERY_z369 NOK")
-
-        df_QUERY_z369 = df_resultado_Export_z369_final
-
+# ---------------------------------------------
+        # Cria a coluna 'ATIVO_TL' na tabela df_QUERY_TELA_164_FOTO
         df_QUERY_TELA_164_FOTO['ATIVO_TL'] = df_QUERY_TELA_164_FOTO['VAGAO'].astype(
             str).str.zfill(7) + df_QUERY_TELA_164_FOTO['SERIE']
-        df_QUERY_z369['ATIVO_TL'] = df_QUERY_z369['ATIVO_TL'].astype(
-            str)  # Garantir consistência de tipo
+
+        # Garante que 'ATIVO_TL' em df_QUERY_z369 também seja do tipo string
+        df_QUERY_z369['ATIVO_TL'] = df_QUERY_z369['ATIVO_TL'].astype(str)
+
+        # Realiza a junção com how='left' para manter todos os registros de df_QUERY_TELA_164_FOTO
         df_stage_merge = pd.merge(
             df_QUERY_TELA_164_FOTO, df_QUERY_z369, on='ATIVO_TL', how='left')
 
+        # Converte a coluna 'NR_OS' para string ou vazio, conforme necessário
         df_stage_merge['NR_OS'] = df_stage_merge['NR_OS'].apply(
             lambda x: str(int(x)) if pd.notnull(x) else '')
-        df_stage_merge = df_stage_merge[(
-            df_stage_merge['Aux_Status'] != "Em processamento")]
-        df_stage_merge = df_stage_merge.drop_duplicates(
-            subset='NOTA', keep='first')
+        df_stage_merge['key'] = df_stage_merge['NOTA'].astype(str) + \
+            df_stage_merge['ATIVO_TL']
 
-        pd.set_option('display.max_rows', None)
-        pd.set_option('display.max_columns', None)
-        pd.set_option('display.width', None)
-        pd.set_option('display.max_colwidth', None)
+        # Remove as duplicatas baseadas na coluna 'NOTA', mantendo o primeiro registro
+        df_stage_merge = df_stage_merge.drop_duplicates(
+            subset='key', keep='first')
+
+        # Converte 'DT_NOTA' para o formato desejado, lidando com erros
+        df_stage_merge['DT_NOTA'] = pd.to_datetime(
+            df_stage_merge['DT_NOTA'], dayfirst=True, errors='coerce').dt.strftime('%Y-%m-%d')
+
+        # Garante que 'ATIVO_TL' sem notas também apareçam
+        # Substitui valores NaN em colunas críticas para evitar inconsistências
+        df_stage_merge = df_stage_merge.fillna({
+            'NR_OS': '',
+            'NOTA': '',
+            'DT_NOTA': '',
+            'Aux_Status': ''
+        })
+
+
+
+# ---------------------------------------------
 
         Pontuacao_trem = pd.pivot_table(
             df_stage_merge, index='NR_OS', columns='TP_NOTA', aggfunc='size', fill_value=0)
@@ -344,7 +533,7 @@ def lista():
         Pontuacao_trem = Pontuacao_trem.sort_values(
             by='M2', ascending=False).drop_duplicates().reset_index(drop=True)
 
-        Pontuacao_trem = Pontuacao_trem[['TREM', 'M1', 'M2', 'NR_OS']]
+        Pontuacao_trem = Pontuacao_trem[['TREM', 'M1', 'M2','M9','M6' , 'NR_OS']]
         Pontuacao_trem['TREM'] = Pontuacao_trem['TREM'].astype(str)
         Pontuacao_trem = Pontuacao_trem[(Pontuacao_trem['TREM'] != "None")]
 
@@ -355,7 +544,28 @@ def lista():
         print(f"Erro: {e}")
 
     df_stage_merge = df_stage_merge.drop_duplicates(
-        subset='NOTA', keep='first')
+        subset='key', keep='first')
+    
+# -------------- new
+    # Contar a quantidade de ocorrências de cada chave em df2
+    df_QUERY_TELA_164_FOTO['NR_OS'] = df_QUERY_TELA_164_FOTO['NR_OS'].fillna(
+        0).astype(int).astype(str)
+    # df_stage_merge['Qtd_vg_Por_OS'] = df_stage_merge['NR_OS']
+    contagem = df_QUERY_TELA_164_FOTO.groupby('NR_OS')['VAGAO'].nunique()
+    print(contagem)
+
+    # Adicionar uma coluna ao df1 com base na contagem, garantindo que valores NA sejam tratados
+    df_stage_merge['Qtd_vg_Por_OS'] = df_stage_merge['NR_OS'].map(
+        contagem).fillna(0)
+
+    # Certifique-se de que os valores NA sejam preenchidos corretamente antes de converter para int
+    df_stage_merge['Qtd_vg_Por_OS'] = df_stage_merge['Qtd_vg_Por_OS'].astype(
+        int)
+
+    df_stage_merge = df_stage_merge.drop_duplicates(
+        subset='key', keep='first')
+# -------------- new
+
 
     df_stage_merge.to_json(
         'files\\df_stage_merge_saved.json', orient='records', lines=True)
@@ -365,7 +575,7 @@ def lista():
     return render_template('lista.html', df=df)
 
 
-@app.route('/save_id', methods=['GET'])
+@ app.route('/save_id', methods=['GET'])
 def save_id():
     # Obtém o valor do ID da query string
     # df_stage_merge = pd.read_csv('files//df_stage_merge.csv')
@@ -414,15 +624,21 @@ def save_id():
     if len(df_filtrado[df_filtrado['TP_NOTA'] == "M1"]) == 0:
         print("entrou")
         b_resumo["M1"] = 0
+    if len(df_filtrado[df_filtrado['TP_NOTA'] == "M6"]) == 0:
+        print("entrou")
+        b_resumo["M6"] = 0
+    if len(df_filtrado[df_filtrado['TP_NOTA'] == "M9"]) == 0:
+        print("entrou")
+        b_resumo["M9"] = 0
 
-    b_resumo = b_resumo[['ATIVO_TL', 'M1', 'M2', 'SEQUENCIA']]
+    b_resumo = b_resumo[['ATIVO_TL', 'M1', 'M2', 'M6','M9','SEQUENCIA']]
     b_resumo['SEQUENCIA'] = b_resumo['SEQUENCIA'].astype(int).astype(str)
 
     # Renderiza a tabela filtrada em um template
     return render_template('filtered.html', df=b_resumo)
 
 
-@app.route('/notas', methods=['GET'])
+@ app.route('/notas', methods=['GET'])
 def notas():
     # df_stage_merge = pd.read_csv('files//df_stage_merge.csv')
 
@@ -443,12 +659,14 @@ def notas():
         "VAGAO", "ID_VAGAO", "SERIE", "TREM", "SEQUENCIA", "LOCAL",
         "ORIGEM", "DESTINO", "NR_OS", "COD_LINHA", "ATIVO_TL", "NOTA",
         "DT_NOTA", "Notificador", "Texto_Causa", "TP_NOTA", "TEXTO",
-        "Texto_Item", "Texto_AVARIA", "DATA_QMDAT", "CodFalha", "Flag", "Aux_Status", "BASE"
+        "Texto_Item", "Texto_AVARIA", "DATA_QMDAT", "CodFalha", "Flag", "Aux_Status", "BASE","DESC_LOTACAO", "Qtd_vg_Por_OS"
     ]
+
     df_filtrado = df_filtrado[colunas_desejadas]
     # df_filtrado['SEQUENCIA'] = df_filtrado['SEQUENCIA'].astype(int).astype(str)
     # df_filtrado['NOTA'] = df_filtrado['NOTA'].astype(int).astype(str)
-
+    notas_verificar = {'M2', 'M9', 'M6'}
+    df_filtrado['nt_critica'] = df_filtrado.groupby('VAGAO')['TP_NOTA'].transform(lambda x: bool(set(x) & notas_verificar))
     print(len(df_filtrado))
     print(df_filtrado.columns)
 
@@ -459,7 +677,7 @@ def notas():
     return render_template('notas.html', df=df_filtrado)
 
 
-@app.route('/atualizar', methods=['GET'])
+@ app.route('/atualizar', methods=['GET'])
 def atualizar():
     def run_script():
         # Caminho do script Python a ser executado

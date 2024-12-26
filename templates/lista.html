@@ -109,6 +109,8 @@
                     <th>TREM</th>
                     <th>M1</th>
                     <th>M2</th>
+                    <th>M6</th>
+                    <th>M9</th>
                     <th>NR_OS</th>
                     <th>Ação</th>
                 </tr>
@@ -120,6 +122,8 @@
                     <td>{{ row['TREM'] }}</td>
                     <td>{{ row['M1'] }}</td>
                     <td class="m2-cell">{{ row['M2'] }}</td>
+                    <td class="m2-cell">{{ row['M6'] }}</td>
+                    <td class="m2-cell">{{ row['M9'] }}</td>
                     <td>{{ row['NR_OS'] }}</td>
                     <td>
                         <button class="btn" onclick="saveID('{{ row['NR_OS'] }}')">Selecionar</button>
@@ -150,24 +154,37 @@
     function saveID(id) {
         window.location.href = `/save_id?id=${id}`;
     }
-    function applyConditionalFormatting() {
-        const table = document.getElementById("data-table");
-        const rows = table.getElementsByTagName("tr");
+// Apply conditional formatting to M2 and M6 columns
+function applyConditionalFormatting() {
+    const table = document.getElementById("data-table");
+    const rows = table.getElementsByTagName("tr");
 
-        for (let i = 1; i < rows.length; i++) {
-            const cell = rows[i].getElementsByClassName("m2-cell")[0]; // Column M2
-            if (cell) {
-                const value = parseFloat(cell.textContent || cell.innerText);
-                if (value > 0) {
-                    cell.style.color = "white";
-                    cell.style.backgroundColor = "red";
-                }
+    for (let i = 1; i < rows.length; i++) {
+        // Column M2
+        const m2Cell = rows[i].getElementsByClassName("m2-cell")[0]; 
+        if (m2Cell) {
+            const valueM2 = parseFloat(m2Cell.textContent || m2Cell.innerText);
+            if (valueM2 > 0) {
+                m2Cell.style.color = "white";
+                m2Cell.style.backgroundColor = "red";
+            }
+        }
+
+        // Column M6
+        const m6Cell = rows[i].getElementsByClassName("m2-cell")[1]; 
+        if (m6Cell) {
+            const valueM6 = parseFloat(m6Cell.textContent || m6Cell.innerText);
+            if (valueM6 > 0) {
+                m6Cell.style.color = "white";
+                m6Cell.style.backgroundColor = "darkred";
             }
         }
     }
+}
 
-    // Run the conditional formatting after the page loads
-    document.addEventListener("DOMContentLoaded", applyConditionalFormatting);
+// Run the conditional formatting after the page loads
+document.addEventListener("DOMContentLoaded", applyConditionalFormatting);
+
     
     </script>
 </body>

@@ -125,8 +125,9 @@
             <button onclick="exportar()" class="btn">Exportar</button>
         </div>
         <div style="text-align: left; margin: 20px 0;">
-            <button onclick="toggleSelectAll()" class="btn" id="select-all-btn">Selecionar Todos</button>
+            <button onclick="toggleSelectAll()" class="btn" id="select-all-btn">Selecionar Todos Vagões com M2</button>
             <button onclick="enviarParaServidor()" class="btn">Indicar para Retenção</button>
+            <button onclick="migrarParaTela()" class="btn">Sem Retenção</button>
 
         </div>
         <div class="table-wrapper">
@@ -143,6 +144,7 @@
                         <th>DESTINO</th>
                         <th>NR_OS</th>
                         <th>ATIVO_TL</th>
+                        <th>DESC_LOTACAO</th>
                         <th>NOTA</th>
                         <th>DT_NOTA</th>
                         <th>Notificador</th>
@@ -156,11 +158,20 @@
                         <th>Flag</th>
                         <th>Aux_Status</th>
                         <th>BASE</th>
+                        <th>Notas por vagão</th>
+                        <th>nt_critica</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for index, row in df.iterrows() %}
-                    <tr {% if row['TP_NOTA'] == 'M2' %} style="background-color: red;" {% endif %}>
+                    <tr 
+                    {% if row['TP_NOTA'] == 'M2' %} 
+                        style="background-color: red; color: white;" 
+                    {% elif row['TP_NOTA'] == 'M6' %} 
+                        style="background-color: darkred; color: white;" 
+                    {% elif row['Aux_Status'] == 'MSPR' and row['TP_NOTA'] not in ['M2', 'M6'] %} 
+                        style="background-color: yellow; color: black;" 
+                    {% endif %}>
                         <td>
                             <input 
                                 type="checkbox" 
@@ -178,6 +189,7 @@
                         <td>{{ row['DESTINO'] }}</td>
                         <td>{{ row['NR_OS'] }}</td>
                         <td>{{ row['ATIVO_TL'] }}</td>
+                        <td>{{ row['DESC_LOTACAO'] }}</td>
                         <td>{{ row['NOTA'] }}</td>
                         <td>{{ row['DT_NOTA'] }}</td>
                         <td>{{ row['Notificador'] }}</td>
@@ -191,6 +203,8 @@
                         <td>{{ row['Flag'] }}</td>
                         <td>{{ row['Aux_Status'] }}</td>
                         <td>{{ row['BASE'] }}</td>
+                        <td>{{ row['Qtd_vg_Por_OS'] }}</td>
+                        <td>{{ row['nt_critica'] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -200,17 +214,26 @@
     <script>
         let allSelected = false; // Variável para rastrear o estado do botão "Selecionar Todos"
 
-        function toggleSelectAll() {
-            const checkboxes = document.querySelectorAll(".row-checkbox");
-            allSelected = !allSelected; // Alterna o estado entre selecionado e não selecionado
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = allSelected; // Marca ou desmarca todos os checkboxes
-            });
+     function toggleSelectAll() {
+        const checkboxes = document.querySelectorAll(".row-checkbox");
+        const rows = document.querySelectorAll("#data-table tbody tr");
+        allSelected = !allSelected; // Alterna o estado entre selecionado e não selecionado
 
-            // Atualiza o texto do botão com base no estado atual
-            const selectAllBtn = document.getElementById("select-all-btn");
-            selectAllBtn.textContent = allSelected ? "Desmarcar Todos" : "Selecionar Todos";
-        }
+        rows.forEach((row, index) => {
+            const ntCriticaCell = row.cells[25]?.textContent; // Coluna nt_critica (26ª coluna, índice 25)
+            const checkbox = checkboxes[index];
+
+            if (ntCriticaCell === "True" && checkbox) { 
+                checkbox.checked = allSelected; // Marca ou desmarca checkboxes onde nt_critica é True
+            } else if (checkbox) {
+                checkbox.checked = false; // Desmarca outras linhas
+            }
+        });
+
+        // Atualiza o texto do botão com base no estado atual
+        const selectAllBtn = document.getElementById("select-all-btn");
+        selectAllBtn.textContent = allSelected ? "Desmarcar Todos" : "Selecionar Todos";
+    }
 
         function selectMatchingCheckboxes(checkbox) {
             const ativoTLValue = checkbox.getAttribute("data-ativo-tl");
@@ -318,6 +341,32 @@ function enviarParaServidor() {
         alert("Nenhuma linha selecionada para salvar.");
     }
 }
+
+
+// Função para migrar para a tela '/semretencao?id={id}'
+function migrarParaTela() {
+    // Pega os valores de NR_OS e TREM da primeira linha da tabela
+    const firstRow = document.querySelector('#data-table tbody tr'); // Seleciona a primeira linha
+    if (firstRow) {
+        const nrOs = firstRow.cells[8].textContent.trim();  // NR_OS é a 9ª coluna (índice 8)
+        const trem = firstRow.cells[3].textContent.trim();  // TREM é a 4ª coluna (índice 3)
+
+        // Cria a query string no formato '?id=NR_OS,TREM'
+        const queryString = `?id=${encodeURIComponent(nrOs + ',' + trem)}`;
+
+        // Cria a URL para redirecionamento com a query string
+        const url = `/semretencao${queryString}`;
+
+        // Redireciona para a nova URL
+        window.location.href = url;
+    } else {
+        alert("Nenhuma linha encontrada na tabela.");
+    }
+}
+
+
+
+
 
     </script>
 </body>

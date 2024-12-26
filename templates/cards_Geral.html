@@ -49,6 +49,20 @@
             margin-bottom: 20px;
             gap: 15px;
         }
+        .btn-danger {
+    background-color: #ff4d4d;
+    margin-left: 23px;
+    color: white;
+    padding: 5px 10px; /* Reduz o tamanho do botão */
+    font-size: 14px; /* Deixa o texto menor */
+    border: none;
+    border-radius: 3px; /* Ajusta as bordas */
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.btn-danger:hover {
+    background-color: #cc0000;
+}
         .filter-bar input,
         .filter-bar select {
             padding: 10px;
@@ -93,6 +107,14 @@
             color: #fff;
             font-weight: normal;
         }
+        .id-now {
+            position: absolute;
+            top: 40px;
+            right: 20px;
+            font-size: 8px;
+            color: #fff;
+            font-weight: normal;
+        }
         .card-content {
             padding: 20px;
         }
@@ -125,7 +147,7 @@
         }
         h3 {
             margin: 0 0 10px;
-            font-size: 16px;
+            font-size: 20px;
             color: #007bff;
         }
         .btn-primary {
@@ -159,6 +181,19 @@
                 width: 100%;
             }
         }
+        input[type="text"] {
+            padding: 10px;
+            width: 100%;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        input[type="text"]:focus {
+            border-color: #007bff;
+            outline: none;
+        }
     </style>
 </head>
 <body>
@@ -179,7 +214,8 @@
 
   
         </select>
-        <button onclick="goToNextPage()" class="btn">Modelo Email </button>
+        <button onclick="goToNextPage()" class="btn-primary"> Modelo Email </button>
+        <button onclick="goBackToList()" class="btn-primary">Voltar Lista </button>
     </div>
 
     <div class="container">
@@ -187,9 +223,14 @@
         {% for (nr_os, trem), os_rows in df.groupby(['NR_OS', 'TREM']) %}
         <div class="card">
             <div class="card-header">
-                <span><input type="checkbox" id="select-all">OS: {{ nr_os }} | TREM: {{ trem }}  </span>
-                <span class="date-now">{{ os_rows.iloc[0]['data_now'] }}</span>  <!-- Data atual -->                  
-                <button class="btn-primary" onclick="deleteItem('{{ nr_os }}')">Excluir</button><!-- Botão de exclusão -->
+                
+                <span><input type="checkbox" id="select-all">
+                    OS: {{ nr_os }} | TREM: {{ trem }}‎ ‎ ‎‎   | ‎ ‎ ‎ ‎   Vagões Totais: {{ os_rows.iloc[0]['Qtd_vg_Por_OS'] }}‎ ‎ ‎ ‎  |‎ ‎ ‎ ‎   Data Hora Passagem: {{ os_rows.iloc[0]['DataHoraPassagem'] }}</span>
+                
+                <span class="date-now">{{ os_rows.iloc[0]['data_now'] }}</span>  <!-- Data atual -->        
+                <span class="id-now">{{ os_rows.iloc[0]['ID'] }}</span>           
+                <button class="btn-danger" onclick="deleteItem('{{ nr_os }}')">Excluir</button><!-- Botão de exclusão -->
+                
             </div>
             <div class="card-content">
                 {% for ativo_tl, rows in os_rows.groupby('ATIVO_TL') %}
@@ -198,30 +239,44 @@
                     <div style="margin-bottom: 10px;">
                         Pode ir para TOM: 
                         <select name="pode_ir_para_tom"disabled>
-                            <option value="nao">Não</option>
-                            <option value="sim">Sim</option>
+                            <option value="nao" {% if rows['Pode_ir_para_TOM'].iloc[0] == 'nao' %}selected{% endif %}>Não</option>
+                            <option value="sim" {% if rows['Pode_ir_para_TOM'].iloc[0] == 'sim' %}selected{% endif %}>Sim</option>
                         </select>
                         OBRIGATÓRIA:  
                         <select name="obrigatoria"disabled>
-                            <option value="sim">Sim</option>
-                            <option value="nao">Não</option>
+                            <option value="sim" {% if rows['Obrigatoria'].iloc[0] == 'sim' %}selected{% endif %}>Sim</option>
+                            <option value="nao" {% if rows['Obrigatoria'].iloc[0] == 'nao' %}selected{% endif %}>Não</option>
                         </select>
                         ISOLADO?:   
-                        <select name="isoladodisabled"disabled>
-                            <option value="nao">Não</option>
-                            <option value="sim">Sim</option>
+                        <select name="isolado"disabled>
+                            <option value="nao" {% if rows['Isolado'].iloc[0] == 'nao' %}selected{% endif %}>Não</option>
+                            <option value="sim" {% if rows['Isolado'].iloc[0] == 'sim' %}selected{% endif %}>Sim</option>
                         </select>
                         REC. SISTEMA:   
                         <select name="rec_sistema"disabled>
-                            <option value="sim">Sim</option>
-                            <option value="nao">Não</option>
+                            <option value="sim" {% if rows['Rec_Sistema'].iloc[0] == 'sim' %}selected{% endif %}>Sim</option>
+                            <option value="nao" {% if rows['Rec_Sistema'].iloc[0] == 'nao' %}selected{% endif %}>Não</option>
                         </select>
-                    </div>
+                        Local:   
+                        <select name="Local_Retencao"disabled>
+                            <option value="ZRO" {% if rows['Local_Retencao'].iloc[0] == 'ZRO' %}selected{% endif %}>ZRO</option>
+                            <option value="TOM" {% if rows['Local_Retencao'].iloc[0] == 'TOM' %}selected{% endif %}>TOM</option>
+                        </select>
+                        <div style="margin-bottom: 10px;">
+                            <label for="observacao">Observação:</label>
+                            <input type="text" id="observacao" name="observacao" 
+                                   placeholder="Outro motivo de Retenção" 
+                                   style="width: 95%;" 
+                                   value="{{ rows['Observacao_Retencao'].iloc[0] if rows['Observacao_Retencao'].iloc[0] else '' }}"disabled>
+                        </div>
+
+             </div>
                     <table>
                         <thead>
                             <tr>
                                 <th>Nº</th>
                                 <th>VAGÃO</th>
+                                <th>DESC_LOTACAO</th>
                                 <th>NOTA</th>
                                 <th>DT_NOTA</th>
                                 <th>TEXTO</th>
@@ -234,6 +289,7 @@
                             <tr>
                                 <td>{{ row['Sequencia'] }}</td>
                                 <td>{{ row['ATIVO_TL'] }}</td>
+                                <td>{{ row['DESC_LOTACAO'] }}</td>
                                 <td>{{ row['NOTA'] }}</td>
                                 <td>{{ row['DT_NOTA'] }}</td>
                                 <td>{{ row['TEXTO'] }}</td>
@@ -251,13 +307,11 @@
     </div>
 
     <script>
-
-    function deleteItem(id) {
+        function deleteItem(id) {
             fetch(`/delete_item/${id}`, { method: 'POST' })
                 .then(response => {
                     if (response.ok) {
-                        // Atualiza a página para refletir a exclusão
-                        location.reload();
+                        location.reload(); // Atualiza a página após exclusão bem-sucedida
                     } else {
                         alert("Erro ao excluir item.");
                     }
@@ -266,60 +320,70 @@
                     console.error("Erro:", error);
                 });
         }
-        
-
-        function filterCards() {
-            const input = document.getElementById("os-filter").value.toLowerCase();
-            const cards = document.querySelectorAll('.card');
-
-            cards.forEach(card => {
-                const nrOs = card.querySelector('.card-header').textContent.split('|')[0].trim().split(':')[1].trim();
-                if (nrOs.toLowerCase().includes(input)) {
-                    card.style.display = ""; // Exibir o cartão
-                } else {
-                    card.style.display = "none"; // Esconder o cartão
-                }
-            });
-        }
-
-        function sortCardsByDateDesc() {
+    
+        function sortCardsByID() {
         const container = document.querySelector('.container'); // Container das cartas
         const cards = Array.from(document.querySelectorAll('.card')); // Todas as cartas
 
-        // Ordenar as cartas pela data mais recente para a mais antiga
-        const sortedCards = cards.sort((a, b) => {
-            const dateA = new Date(a.querySelector('.date-now').textContent.trim());
-            const dateB = new Date(b.querySelector('.date-now').textContent.trim());
-            return dateB - dateA; // Decrescente
+        // Ordenar as cartas pelo ID (valor da classe id-now)
+        const sortedCards = cards.sort((b, a) => {
+            const idA = a.querySelector('.id-now').textContent.trim();
+            const idB = b.querySelector('.id-now').textContent.trim();
+            return idA.localeCompare(idB); // Ordenação crescente por ID
         });
 
         // Reposicionar as cartas no DOM
         sortedCards.forEach(card => container.appendChild(card));
     }
 
-    // Chame a função assim que o DOM estiver carregado
     document.addEventListener('DOMContentLoaded', () => {
-        sortCardsByDateDesc();
+        sortCardsByID(); // Aplicar ordenação inicial por ID
+
+        // Criar o MutationObserver para monitorar alterações no container
+        const observer = new MutationObserver(() => {
+            sortCardsByID(); // Reaplicar a ordenação após mudanças
+        });
+
+        // Configurar o observer para monitorar o container
+        const container = document.querySelector('.container');
+        observer.observe(container, { childList: true }); // Observa adições/remoções de nós filho
     });
+
+    function filterCards() {
+        const input = document.getElementById("os-filter").value.toLowerCase();
+        const cards = document.querySelectorAll('.card');
+
+        cards.forEach(card => {
+            const nrOs = card.querySelector('.card-header').textContent.split('|')[0].trim().split(':')[1].trim();
+            if (nrOs.toLowerCase().includes(input)) {
+                card.style.display = ""; // Exibir o cartão
+            } else {
+                card.style.display = "none"; // Esconder o cartão
+            }
+        });
+    }
 
     function goToNextPage() {
-    const selectedValues = [];
-    const checkboxes = document.querySelectorAll('.card input[type="checkbox"]:checked');
-    
-    checkboxes.forEach(checkbox => {
-        // Extrai o número da OS ou outro identificador relevante
-        const card = checkbox.closest('.card'); // Localiza o cartão pai do checkbox
-        const nrOs = card.querySelector('.card-header').textContent.split('|')[0].trim().split(':')[1].trim();
-        selectedValues.push(nrOs);
-    });
+        const selectedValues = [];
+        const checkboxes = document.querySelectorAll('.card input[type="checkbox"]:checked');
 
-    if (selectedValues.length > 0) {
-        const queryString = `?id=${encodeURIComponent(selectedValues.join(','))}`;
-        window.location.href = `email${queryString}`;
-    } else {
-        alert("Selecione pelo menos um item antes de prosseguir.");
+        checkboxes.forEach(checkbox => {
+            const card = checkbox.closest('.card'); // Localiza o cartão pai do checkbox
+            const nrOs = card.querySelector('.card-header').textContent.split('|')[0].trim().split(':')[1].trim();
+            selectedValues.push(nrOs);
+        });
+
+        if (selectedValues.length > 0) {
+            const queryString = `?id=${encodeURIComponent(selectedValues.join(','))}`;
+            window.location.href = `/email${queryString}`;
+        } else {
+            alert("Selecione pelo menos um item antes de prosseguir.");
+        }
     }
-}
+
+    function goBackToList() {
+        window.location.href = '/lista'; // Redireciona para a página /lista
+        }
     </script>
 </body>
 </html>

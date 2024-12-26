@@ -76,7 +76,7 @@
         }
         h3 {
             margin: 0 0 10px;
-            font-size: 16px;
+            font-size: 20px;
             color: #007bff;
         }
         select {
@@ -130,6 +130,28 @@
                 padding: 15px;
             }
         }
+        input[type="text"] {
+            padding: 10px;
+            width: 100%;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        input[type="text"]:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+    input[type="text"],
+    input[type="datetime-local"] {
+        width: 25%;
+        padding: 8px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+    }
     </style>
 </head>
 <body>
@@ -138,8 +160,13 @@
         <!-- Dynamic Cards -->
         {% for (nr_os, trem), os_rows in df.groupby(['NR_OS', 'TREM']) %}
         <div class="card">
-            <div class="card-header">OS: {{ nr_os }} | TREM: {{ trem }}</div>
+            <div class="card-header">OS: {{ nr_os }} | TREM: {{ trem }} | Vagões Totais: {{ os_rows.iloc[0]['Qtd_vg_Por_OS'] }} </div>
+
             <div class="card-content">
+                            <div style="margin-bottom: 10px;">
+                <label for="datahora">Data e hora passagem:</label>
+                <input type="datetime-local" id="datahora" name="datahora" style="width: 25%;">
+            </div>
                 {% for ativo_tl, rows in os_rows.groupby('ATIVO_TL') %}
                 <div class="table-wrapper">
                     <h3>Vagão: {{ ativo_tl }}</h3>
@@ -165,12 +192,24 @@
                             <option value="sim">Sim</option>
                             <option value="nao">Não</option>
                         </select>
+                        ZRO ou TOM:   
+                        <select name="TOMZRO">
+                            <option value="ZRO">ZRO</option>
+                            <option value="TOM">TOM</option>
+                        </select>
+
                     </div>
+                    <div style="margin-bottom: 10px;">
+                        <label for="observacao">Observação Retenção:</label>
+                        <input type="text" id="observacao" name="observacao" placeholder="Outro motivo de Retenção" style="width: 80%;">
+                    </div>
+
                     <table>
                         <thead>
                             <tr>
                                 <th>Nº</th>
                                 <th>VAGÃO</th>
+                                <th>DESC_LOTACAO</th>       
                                 <th>NOTA</th>
                                 <th>DT_NOTA</th>
                                 <th>TEXTO</th>
@@ -183,6 +222,7 @@
                             <tr>
                                 <td>{{ row['SEQUENCIA'] }}</td>
                                 <td>{{ row['ATIVO_TL'] }}</td>
+                                <td>{{ row['DESC_LOTACAO'] }}</td>
                                 <td>{{ row['NOTA'] }}</td>
                                 <td>{{ row['DT_NOTA'] }}</td>
                                 <td>{{ row['TEXTO'] }}</td>
@@ -209,6 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cards.forEach(card => {
             const nrOs = card.querySelector('.card-header').textContent.split('|')[0].trim().split(':')[1].trim();
             const trem = card.querySelector('.card-header').textContent.split('|')[1].trim().split(':')[1].trim();
+            const Qtd_vg_Por_OS = card.querySelector('.card-header').textContent.split('|')[2].trim().split(':')[1].trim();
 
             const tables = card.querySelectorAll('.table-wrapper');
             tables.forEach(tableWrapper => {
@@ -218,6 +259,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const obrigatoria = tableWrapper.querySelector('select[name="obrigatoria"]').value;
                 const isolado = tableWrapper.querySelector('select[name="isolado"]').value;
                 const recSistema = tableWrapper.querySelector('select[name="rec_sistema"]').value;
+                const TOMZRO = tableWrapper.querySelector('select[name="TOMZRO"]').value;
+                const dataHoraPassagem = document.querySelector('#datahora').value;
+
+                
+
+                // Coletando o valor do campo de Observação
+                const observacao = tableWrapper.querySelector('input[name="observacao"]').value;
 
                 const rows = tableWrapper.querySelectorAll('tbody tr');
                 rows.forEach(row => {
@@ -230,13 +278,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         Obrigatoria: obrigatoria,
                         Isolado: isolado,
                         Rec_Sistema: recSistema,
+                        Local_Retencao: TOMZRO,
+                        Observacao: observacao,  // Incluindo o campo de Observação
                         Sequencia: cols[0].textContent,
                         VAGÃO: cols[1].textContent,
-                        NOTA: cols[2].textContent,  <!-- Corrigido para incluir 'NOTA' -->
-                        DT_NOTA: cols[3].textContent,
-                        TEXTO: cols[4].textContent,
-                        Texto_Causa: cols[5].textContent,
-                        TP_NOTA: cols[6].textContent
+                        DESC_LOTACAO : cols[2].textContent,
+                        NOTA: cols[3].textContent,  // Corrigido para incluir 'NOTA'
+                        DT_NOTA: cols[4].textContent,
+                        TEXTO: cols[5].textContent,
+                        Texto_Causa: cols[6].textContent,
+                        TP_NOTA: cols[7].textContent,
+                        Qtd_vg_Por_OS : Qtd_vg_Por_OS,
+                        DataHoraPassagem: dataHoraPassagem 
                     });
                 });
             });

@@ -64,23 +64,16 @@
             white-space: nowrap; /* Prevent line breaks */
         }
         table th {
-            background-color: #f5f5f5;
+            
             color: #333;
             font-weight: bold;
         }
-        table td {
-            background-color: #fff;
-        }
-        table tr:nth-child(even) td {
-            background-color: #f9f9f9;
-        }
-        table tr:hover td {
-            background-color: #f3f3f3;
-        }
+
+
         .col-defeitos {
             white-space: normal; /* Allow line breaks */
             max-width: 300px; /* Adjust this value for maximum width */
-            word-break: break-word; /* Ensure long words break correctly */
+            word-wrap: break-word; /* Ensure long words break correctly */
         }
         .btn {
             background-color: #007bff;
@@ -98,29 +91,17 @@
         .hidden {
             display: none;
         }
+        /* Row color based on category */
+        .category-b {
+            background-color: rgb(49, 49, 49);
+            color: rgb(230, 230, 230);
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- User Info Display -->
-        <div style="position: absolute; top: 20px; right: 20px; font-size: 18px; font-weight: bold; color: #333;">
-            {{ user_info }}
-        </div>
-
-        <!-- Title Section -->
         <div class="header">
             <h1>Lista Trem</h1>
-        </div>
-
-        <!-- Search Bar -->
-        <div class="search-bar">
-            <input
-                type="text"
-                id="search-input"
-                class="search-input"
-                placeholder="Digite para filtrar pela coluna TREM..."
-                onkeyup="filterTable()"
-            />
         </div>
 
         <!-- Data Table -->
@@ -129,49 +110,53 @@
                 <tr>
                     <th>NR_OS</th>
                     <th>TREM</th>
-                    <th>ATIVO_TL</th>
-                    <th>NOTA</th>
+                    <th>QTD VGS</th>
+                    <th>DATA PASSAGEM</th>
                     <th>Pode_ir_para_TOM</th>
                     <th>Obrigatoria</th>
                     <th>Isolado</th>
                     <th>Rec_Sistema</th>
                     <th>Sequencia</th>
+                    <th>ATIVO_TL</th>
+                    <th>Defeitos</th>
+                    <th>NOTA</th>
                     <th>DT_NOTA</th>
-                    <th class="col-defeitos">Defeitos</th>
                     <th>data_now</th>
+                    <th>Categoria</th>
                 </tr>
             </thead>
             <tbody>
                 {% for index, row in df.iterrows() %}
-                <tr>
-                    <td>{{ row['NR_OS'] }}</td>
-                    <td>{{ row['TREM'] }}</td>
-                    <td>{{ row['ATIVO_TL'] }}</td>
-                    <td>{{ row['NOTA'] }}</td>
-                    <td>{{ row['Pode_ir_para_TOM'] }}</td>
-                    <td>{{ row['Obrigatoria'] }}</td>
-                    <td>{{ row['Isolado'] }}</td>
-                    <td>{{ row['Rec_Sistema'] }}</td>
-                    <td>{{ row['Sequencia'] }}</td>
-                    <td>{{ row['DT_NOTA'] }}</td>
-                    <td class="col-defeitos">{{ row['Defeitos'] }}</td>
-                    <td>{{ row['data_now'] }}</td>
-                </tr>
+                    <tr 
+                        {% if row['Categoria'] == 'B' %} 
+                            style="background-color: rgb(233, 233, 233); color:rgb(0, 0, 0) ;"
+                        {% else %} 
+                            style="background-color: white; color: black;" 
+                        {% endif %}>
+                        <td>{{ row['NR_OS'] }}</td>
+                        <td>{{ row['TREM'] }}</td>
+                        <td>{{ row['Qtd_vg_Por_OS'] }}</td>
+                        <td>{{ row['DataHoraPassagem'] }}</td>
+                        <td>{{ row['Pode_ir_para_TOM'] }}</td>
+                        <td>{{ row['Obrigatoria'] }}</td>
+                        <td>{{ row['Isolado'] }}</td>
+                        <td>{{ row['Rec_Sistema'] }}</td>
+                        <td>{{ row['Sequencia'] }}</td>
+                        <td>{{ row['ATIVO_TL'] }}</td>
+                        <td class="col-defeitos">{{ row['Defeitos'] }}</td> <!-- Apply col-defeitos class here -->
+                        <td>{{ row['NOTA'] }}</td>
+                        <td>{{ row['DT_NOTA'] }}</td>
+                        <td>{{ row['data_now'] }}</td>
+                        <td>{{ row['Categoria'] }}</td>
+                    </tr>
                 {% endfor %}
             </tbody>
         </table>
-    </div>
 
-    <!-- JavaScript -->
-    <script>
-        function filterTable() {
-            const input = document.getElementById("search-input").value.toLowerCase();
-            const rows = document.querySelectorAll("#data-table tbody tr");
-            rows.forEach(row => {
-                const cellText = row.cells[0]?.textContent.toLowerCase() || "";
-                row.classList.toggle("hidden", !cellText.includes(input));
-            });
-        }
-    </script>
+        <!-- Footer -->
+        <div class="footer">
+            <p>Este é um relatório gerado automaticamente. Se tiver dúvidas, entre em contato.</p>
+        </div>
+    </div>
 </body>
 </html>
